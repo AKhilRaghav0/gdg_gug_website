@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "139564775363",
+    "project_id": "gdggug-5cfa2",
+    "storage_bucket": "gdggug-5cfa2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139564775363:android:55f037d198dc60bf7b2f76",
+        "android_client_info": {
+          "package_name": "com.example.gdg_gug_website"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOmU5Bhz1wjuC4vTNa_TxtVWBIuJ-E-5c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
