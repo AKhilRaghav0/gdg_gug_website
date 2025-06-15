@@ -9,20 +9,20 @@ class LandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Hero Section
-          _buildHeroSection(context),
-          
-          // Features Section
-          _buildFeaturesSection(context),
-          
-          // CTA Section
-          _buildCTASection(context),
-          
-          // Footer spacing
-          const SizedBox(height: 48),
-        ],
+        child: Column(
+          children: [
+            // Hero Section
+            _buildHeroSection(context),
+            
+            // Features Section
+            _buildFeaturesSection(context),
+            
+            // CTA Section
+            _buildCTASection(context),
+            
+            // Footer spacing
+            const SizedBox(height: 48),
+          ],
       ),
     );
   }

@@ -17,13 +17,13 @@ class _NewsPageState extends State<NewsPage> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildHeader(context),
-          _buildSearchAndFilters(context),
-          _buildNewsGrid(context),
-          const SizedBox(height: 48),
-        ],
+        child: Column(
+          children: [
+            _buildHeader(context),
+            _buildSearchAndFilters(context),
+            _buildNewsGrid(context),
+            const SizedBox(height: 48),
+          ],
       ),
     );
   }
