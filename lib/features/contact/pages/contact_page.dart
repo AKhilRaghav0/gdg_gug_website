@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/responsive_wrapper.dart';
 import '../../../core/constants/app_constants.dart';
 
@@ -20,15 +19,13 @@ class _ContactPageState extends State<ContactPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildContactSection(context),
-            const SizedBox(height: 48),
-          ],
-        ),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildHeader(context),
+          _buildContactSection(context),
+          const SizedBox(height: 48),
+        ],
       ),
     );
   }
