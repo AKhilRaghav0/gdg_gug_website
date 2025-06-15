@@ -87,10 +87,11 @@ class _NavBarState extends State<NavBar> {
                   child: Row(
                     children: [
                       _buildNavLink(context, 'Home', '/'),
+                      _buildNavLink(context, 'About', '/about'),
                       _buildNavLink(context, 'Events', '/events'),
                       _buildNavLink(context, 'Team', '/team'),
                       _buildNavLink(context, 'News', '/news'),
-                      _buildNavLink(context, 'TPO', '/tpo'),
+                      _buildNavLink(context, 'Contact', '/contact'),
                     ],
                   ),
                 ),
@@ -232,10 +233,11 @@ class _NavBarState extends State<NavBar> {
             
             // Navigation links
             _buildMobileNavLink(context, 'Home', '/'),
+            _buildMobileNavLink(context, 'About', '/about'),
             _buildMobileNavLink(context, 'Events', '/events'),
             _buildMobileNavLink(context, 'Team', '/team'),
             _buildMobileNavLink(context, 'News', '/news'),
-            _buildMobileNavLink(context, 'TPO', '/tpo'),
+            _buildMobileNavLink(context, 'Contact', '/contact'),
             
             const SizedBox(height: 24),
             

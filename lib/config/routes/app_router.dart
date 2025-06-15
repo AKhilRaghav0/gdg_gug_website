@@ -1,6 +1,11 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import '../../features/landing/pages/landing_page.dart';
+import '../../features/team/pages/team_page.dart';
+import '../../features/events/pages/events_page.dart';
+import '../../features/news/pages/news_page.dart';
+import '../../features/about/pages/about_page.dart';
+import '../../features/contact/pages/contact_page.dart';
 import '../../shared/widgets/app_scaffold.dart';
 
 class AppRouter {
@@ -17,16 +22,24 @@ class AppRouter {
             builder: (context, state) => const LandingPage(),
           ),
           GoRoute(
-            path: '/events',
-            builder: (context, state) => const PlaceholderPage(title: 'Events'),
+            path: '/team',
+            builder: (context, state) => const TeamPage(),
           ),
           GoRoute(
-            path: '/team',
-            builder: (context, state) => const PlaceholderPage(title: 'Team'),
+            path: '/events',
+            builder: (context, state) => const EventsPage(),
           ),
           GoRoute(
             path: '/news',
-            builder: (context, state) => const PlaceholderPage(title: 'News'),
+            builder: (context, state) => const NewsPage(),
+          ),
+          GoRoute(
+            path: '/about',
+            builder: (context, state) => const AboutPage(),
+          ),
+          GoRoute(
+            path: '/contact',
+            builder: (context, state) => const ContactPage(),
           ),
           GoRoute(
             path: '/tpo',
