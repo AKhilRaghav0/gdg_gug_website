@@ -162,7 +162,7 @@ class _NavBarState extends State<NavBar> {
       );
     } else {
       return ElevatedButton(
-        onPressed: () => context.go('/login'),
+        onPressed: () => context.go('/admin/login'),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppConstants.googleBlue,
           foregroundColor: Colors.white,
@@ -173,7 +173,7 @@ class _NavBarState extends State<NavBar> {
           elevation: 0,
         ),
         child: const Text(
-          'Login',
+          'Admin Login',
           style: TextStyle(
             fontWeight: FontWeight.w500,
           ),

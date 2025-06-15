@@ -6,6 +6,10 @@ import '../../features/events/pages/events_page.dart';
 import '../../features/news/pages/news_page.dart';
 import '../../features/about/pages/about_page.dart';
 import '../../features/contact/pages/contact_page.dart';
+import '../../features/auth/pages/admin_login_page.dart';
+import '../../features/admin/pages/admin_dashboard.dart';
+import '../../features/admin/pages/admin_events_page.dart';
+import '../../features/admin/pages/admin_team_page.dart';
 import '../../shared/widgets/app_scaffold.dart';
 
 class AppRouter {
@@ -47,9 +51,22 @@ class AppRouter {
           ),
         ],
       ),
+      // Admin routes (outside shell for different layout)
       GoRoute(
-        path: '/login',
-        builder: (context, state) => const PlaceholderPage(title: 'Login'),
+        path: '/admin/login',
+        builder: (context, state) => const AdminLoginPage(),
+      ),
+      GoRoute(
+        path: '/admin/dashboard',
+        builder: (context, state) => const AdminDashboard(),
+      ),
+      GoRoute(
+        path: '/admin/events',
+        builder: (context, state) => const AdminEventsPage(),
+      ),
+      GoRoute(
+        path: '/admin/team',
+        builder: (context, state) => const AdminTeamPage(),
       ),
     ],
   );
