@@ -4,143 +4,135 @@ class Event {
   final String id;
   final String title;
   final String description;
-  final DateTime dateTime;
+  final DateTime date;
   final String location;
-  final String imageUrl;
-  final List<String> tags;
-  final EventType type;
-  final EventStatus status;
+  final String? imageUrl;
+  final String category;
   final int maxAttendees;
   final int currentAttendees;
-  final String organizerId;
-  final String organizerName;
-  final bool isRegistrationOpen;
-  final DateTime registrationDeadline;
-  final List<String> registeredUsers;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final Map<String, dynamic> additionalInfo;
+  final bool isPublished;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final List<String> tags;
+  final String? organizer;
+  final double? fee;
+  final bool isOnline;
+  final String? meetingLink;
 
   Event({
     required this.id,
     required this.title,
     required this.description,
-    required this.dateTime,
+    required this.date,
     required this.location,
-    required this.imageUrl,
-    required this.tags,
-    required this.type,
-    required this.status,
+    this.imageUrl,
+    required this.category,
     required this.maxAttendees,
     required this.currentAttendees,
-    required this.organizerId,
-    required this.organizerName,
-    required this.isRegistrationOpen,
-    required this.registrationDeadline,
-    required this.registeredUsers,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.additionalInfo,
+    required this.isPublished,
+    this.createdAt,
+    this.updatedAt,
+    this.tags = const [],
+    this.organizer,
+    this.fee,
+    this.isOnline = false,
+    this.meetingLink,
   });
 
-  // Convert to Firestore document
-  Map<String, dynamic> toFirestore() {
+  factory Event.fromJson(Map<String, dynamic> json) {
+    return Event(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      date: DateTime.parse(json['date'] as String),
+      location: json['location'] as String,
+      imageUrl: json['imageUrl'] as String?,
+      category: json['category'] as String,
+      maxAttendees: json['maxAttendees'] as int,
+      currentAttendees: json['currentAttendees'] as int,
+      isPublished: json['isPublished'] as bool,
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
+      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
+      organizer: json['organizer'] as String?,
+      fee: json['fee'] as double?,
+      isOnline: json['isOnline'] as bool? ?? false,
+      meetingLink: json['meetingLink'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'title': title,
       'description': description,
-      'dateTime': Timestamp.fromDate(dateTime),
+      'date': date.toIso8601String(),
       'location': location,
       'imageUrl': imageUrl,
-      'tags': tags,
-      'type': type.name,
-      'status': status.name,
+      'category': category,
       'maxAttendees': maxAttendees,
       'currentAttendees': currentAttendees,
-      'organizerId': organizerId,
-      'organizerName': organizerName,
-      'isRegistrationOpen': isRegistrationOpen,
-      'registrationDeadline': Timestamp.fromDate(registrationDeadline),
-      'registeredUsers': registeredUsers,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
-      'additionalInfo': additionalInfo,
+      'isPublished': isPublished,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'tags': tags,
+      'organizer': organizer,
+      'fee': fee,
+      'isOnline': isOnline,
+      'meetingLink': meetingLink,
     };
   }
 
-  // Create from Firestore document
-  factory Event.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  Event copyWith({
+    String? id,
+    String? title,
+    String? description,
+    DateTime? date,
+    String? location,
+    String? imageUrl,
+    String? category,
+    int? maxAttendees,
+    int? currentAttendees,
+    bool? isPublished,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<String>? tags,
+    String? organizer,
+    double? fee,
+    bool? isOnline,
+    String? meetingLink,
+  }) {
     return Event(
-      id: doc.id,
-      title: data['title'] ?? '',
-      description: data['description'] ?? '',
-      dateTime: (data['dateTime'] as Timestamp).toDate(),
-      location: data['location'] ?? '',
-      imageUrl: data['imageUrl'] ?? '',
-      tags: List<String>.from(data['tags'] ?? []),
-      type: EventType.values.firstWhere(
-        (e) => e.name == data['type'],
-        orElse: () => EventType.workshop,
-      ),
-      status: EventStatus.values.firstWhere(
-        (e) => e.name == data['status'],
-        orElse: () => EventStatus.upcoming,
-      ),
-      maxAttendees: data['maxAttendees'] ?? 0,
-      currentAttendees: data['currentAttendees'] ?? 0,
-      organizerId: data['organizerId'] ?? '',
-      organizerName: data['organizerName'] ?? '',
-      isRegistrationOpen: data['isRegistrationOpen'] ?? false,
-      registrationDeadline: (data['registrationDeadline'] as Timestamp).toDate(),
-      registeredUsers: List<String>.from(data['registeredUsers'] ?? []),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-      additionalInfo: Map<String, dynamic>.from(data['additionalInfo'] ?? {}),
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      date: date ?? this.date,
+      location: location ?? this.location,
+      imageUrl: imageUrl ?? this.imageUrl,
+      category: category ?? this.category,
+      maxAttendees: maxAttendees ?? this.maxAttendees,
+      currentAttendees: currentAttendees ?? this.currentAttendees,
+      isPublished: isPublished ?? this.isPublished,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      tags: tags ?? this.tags,
+      organizer: organizer ?? this.organizer,
+      fee: fee ?? this.fee,
+      isOnline: isOnline ?? this.isOnline,
+      meetingLink: meetingLink ?? this.meetingLink,
     );
   }
 
-  // Copy with method for updates
-  Event copyWith({
-    String? title,
-    String? description,
-    DateTime? dateTime,
-    String? location,
-    String? imageUrl,
-    List<String>? tags,
-    EventType? type,
-    EventStatus? status,
-    int? maxAttendees,
-    int? currentAttendees,
-    String? organizerId,
-    String? organizerName,
-    bool? isRegistrationOpen,
-    DateTime? registrationDeadline,
-    List<String>? registeredUsers,
-    DateTime? updatedAt,
-    Map<String, dynamic>? additionalInfo,
-  }) {
-    return Event(
-      id: id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      dateTime: dateTime ?? this.dateTime,
-      location: location ?? this.location,
-      imageUrl: imageUrl ?? this.imageUrl,
-      tags: tags ?? this.tags,
-      type: type ?? this.type,
-      status: status ?? this.status,
-      maxAttendees: maxAttendees ?? this.maxAttendees,
-      currentAttendees: currentAttendees ?? this.currentAttendees,
-      organizerId: organizerId ?? this.organizerId,
-      organizerName: organizerName ?? this.organizerName,
-      isRegistrationOpen: isRegistrationOpen ?? this.isRegistrationOpen,
-      registrationDeadline: registrationDeadline ?? this.registrationDeadline,
-      registeredUsers: registeredUsers ?? this.registeredUsers,
-      createdAt: createdAt,
-      updatedAt: updatedAt ?? DateTime.now(),
-      additionalInfo: additionalInfo ?? this.additionalInfo,
-    );
-  }
+  bool get isFull => currentAttendees >= maxAttendees;
+  bool get hasSpots => currentAttendees < maxAttendees;
+  int get spotsLeft => maxAttendees - currentAttendees;
+  bool get isPast => date.isBefore(DateTime.now());
+  bool get isUpcoming => date.isAfter(DateTime.now());
+  bool get isFree => fee == null || fee == 0.0;
 }
 
 enum EventType {

@@ -14,6 +14,46 @@ class EventService {
   static const String _collection = 'events';
   static const String _registrationsCollection = 'event_registrations';
 
+  // Mock data for development
+  final List<Event> _mockEvents = [
+    Event(
+      id: '1',
+      title: 'Flutter Workshop',
+      description: 'Learn Flutter development from scratch',
+      date: DateTime.now().add(const Duration(days: 7)),
+      location: 'GUG Campus',
+      imageUrl: 'https://via.placeholder.com/300x200',
+      category: 'Workshop',
+      maxAttendees: 50,
+      currentAttendees: 23,
+      isPublished: true,
+    ),
+    Event(
+      id: '2',
+      title: 'Google I/O Extended',
+      description: 'Watch Google I/O together and discuss the latest announcements',
+      date: DateTime.now().add(const Duration(days: 14)),
+      location: 'GUG Auditorium',
+      imageUrl: 'https://via.placeholder.com/300x200',
+      category: 'Conference',
+      maxAttendees: 100,
+      currentAttendees: 45,
+      isPublished: true,
+    ),
+    Event(
+      id: '3',
+      title: 'Android Study Jam',
+      description: 'Learn Android development in a structured way',
+      date: DateTime.now().add(const Duration(days: 21)),
+      location: 'Computer Lab',
+      imageUrl: 'https://via.placeholder.com/300x200',
+      category: 'Study Jam',
+      maxAttendees: 30,
+      currentAttendees: 15,
+      isPublished: false,
+    ),
+  ];
+
   // Get all events with optional filters
   Stream<List<Event>> getEvents({
     EventStatus? status,
@@ -280,6 +320,74 @@ class EventService {
       };
     } catch (e) {
       throw Exception('Failed to get event stats: $e');
+    }
+  }
+
+  // Get all events as a stream
+  Stream<List<Event>> getEvents() {
+    return Stream.value(_mockEvents);
+  }
+
+  // Get published events only
+  Stream<List<Event>> getPublishedEvents() {
+    return Stream.value(_mockEvents.where((e) => e.isPublished).toList());
+  }
+
+  // Get event by ID
+  Future<Event?> getEventByIdMock(String id) async {
+    try {
+      return _mockEvents.firstWhere((e) => e.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Create new event
+  Future<void> createEventMock(Event event) async {
+    // In a real app, this would save to Firebase
+    _mockEvents.add(event);
+  }
+
+  // Update event
+  Future<void> updateEventMock(Event event) async {
+    // In a real app, this would update in Firebase
+    final index = _mockEvents.indexWhere((e) => e.id == event.id);
+    if (index != -1) {
+      _mockEvents[index] = event;
+    }
+  }
+
+  // Delete event
+  Future<void> deleteEventMock(String id) async {
+    // In a real app, this would delete from Firebase
+    _mockEvents.removeWhere((e) => e.id == id);
+  }
+
+  // Register for event
+  Future<void> registerForEventMock(String eventId, String userId) async {
+    // In a real app, this would save registration to Firebase
+    final eventIndex = _mockEvents.indexWhere((e) => e.id == eventId);
+    if (eventIndex != -1) {
+      final event = _mockEvents[eventIndex];
+      if (event.currentAttendees < event.maxAttendees) {
+        _mockEvents[eventIndex] = event.copyWith(
+          currentAttendees: event.currentAttendees + 1,
+        );
+      }
+    }
+  }
+
+  // Unregister from event
+  Future<void> unregisterFromEventMock(String eventId, String userId) async {
+    // In a real app, this would remove registration from Firebase
+    final eventIndex = _mockEvents.indexWhere((e) => e.id == eventId);
+    if (eventIndex != -1) {
+      final event = _mockEvents[eventIndex];
+      if (event.currentAttendees > 0) {
+        _mockEvents[eventIndex] = event.copyWith(
+          currentAttendees: event.currentAttendees - 1,
+        );
+      }
     }
   }
 } 

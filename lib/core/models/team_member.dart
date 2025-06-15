@@ -5,117 +5,147 @@ class TeamMember {
   final String name;
   final String role;
   final String bio;
-  final String imageUrl;
-  final SocialLinks socialLinks;
-  final TeamCategory category;
-  final int order;
+  final String? imageUrl;
+  final String email;
+  final String? linkedinUrl;
+  final String? githubUrl;
+  final String? twitterUrl;
+  final String? instagramUrl;
   final bool isActive;
   final DateTime joinDate;
-  final String email;
-  final String phone;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final List<String> skills;
-  final List<String> achievements;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String? phoneNumber;
+  final String? department;
+  final int? yearOfStudy;
 
   TeamMember({
     required this.id,
     required this.name,
     required this.role,
     required this.bio,
-    required this.imageUrl,
-    required this.socialLinks,
-    required this.category,
-    required this.order,
+    this.imageUrl,
+    required this.email,
+    this.linkedinUrl,
+    this.githubUrl,
+    this.twitterUrl,
+    this.instagramUrl,
     required this.isActive,
     required this.joinDate,
-    required this.email,
-    required this.phone,
-    required this.skills,
-    required this.achievements,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
+    this.skills = const [],
+    this.phoneNumber,
+    this.department,
+    this.yearOfStudy,
   });
 
-  Map<String, dynamic> toFirestore() {
+  factory TeamMember.fromJson(Map<String, dynamic> json) {
+    return TeamMember(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      role: json['role'] as String,
+      bio: json['bio'] as String,
+      imageUrl: json['imageUrl'] as String?,
+      email: json['email'] as String,
+      linkedinUrl: json['linkedinUrl'] as String?,
+      githubUrl: json['githubUrl'] as String?,
+      twitterUrl: json['twitterUrl'] as String?,
+      instagramUrl: json['instagramUrl'] as String?,
+      isActive: json['isActive'] as bool,
+      joinDate: DateTime.parse(json['joinDate'] as String),
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt'] as String)
+          : null,
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
+      skills: (json['skills'] as List<dynamic>?)?.cast<String>() ?? [],
+      phoneNumber: json['phoneNumber'] as String?,
+      department: json['department'] as String?,
+      yearOfStudy: json['yearOfStudy'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'role': role,
       'bio': bio,
       'imageUrl': imageUrl,
-      'socialLinks': socialLinks.toMap(),
-      'category': category.name,
-      'order': order,
-      'isActive': isActive,
-      'joinDate': Timestamp.fromDate(joinDate),
       'email': email,
-      'phone': phone,
+      'linkedinUrl': linkedinUrl,
+      'githubUrl': githubUrl,
+      'twitterUrl': twitterUrl,
+      'instagramUrl': instagramUrl,
+      'isActive': isActive,
+      'joinDate': joinDate.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
       'skills': skills,
-      'achievements': achievements,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'phoneNumber': phoneNumber,
+      'department': department,
+      'yearOfStudy': yearOfStudy,
     };
   }
 
-  factory TeamMember.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return TeamMember(
-      id: doc.id,
-      name: data['name'] ?? '',
-      role: data['role'] ?? '',
-      bio: data['bio'] ?? '',
-      imageUrl: data['imageUrl'] ?? '',
-      socialLinks: SocialLinks.fromMap(data['socialLinks'] ?? {}),
-      category: TeamCategory.values.firstWhere(
-        (e) => e.name == data['category'],
-        orElse: () => TeamCategory.member,
-      ),
-      order: data['order'] ?? 0,
-      isActive: data['isActive'] ?? true,
-      joinDate: (data['joinDate'] as Timestamp).toDate(),
-      email: data['email'] ?? '',
-      phone: data['phone'] ?? '',
-      skills: List<String>.from(data['skills'] ?? []),
-      achievements: List<String>.from(data['achievements'] ?? []),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-    );
-  }
-
   TeamMember copyWith({
+    String? id,
     String? name,
     String? role,
     String? bio,
     String? imageUrl,
-    SocialLinks? socialLinks,
-    TeamCategory? category,
-    int? order,
+    String? email,
+    String? linkedinUrl,
+    String? githubUrl,
+    String? twitterUrl,
+    String? instagramUrl,
     bool? isActive,
     DateTime? joinDate,
-    String? email,
-    String? phone,
-    List<String>? skills,
-    List<String>? achievements,
+    DateTime? createdAt,
     DateTime? updatedAt,
+    List<String>? skills,
+    String? phoneNumber,
+    String? department,
+    int? yearOfStudy,
   }) {
     return TeamMember(
-      id: id,
+      id: id ?? this.id,
       name: name ?? this.name,
       role: role ?? this.role,
       bio: bio ?? this.bio,
       imageUrl: imageUrl ?? this.imageUrl,
-      socialLinks: socialLinks ?? this.socialLinks,
-      category: category ?? this.category,
-      order: order ?? this.order,
+      email: email ?? this.email,
+      linkedinUrl: linkedinUrl ?? this.linkedinUrl,
+      githubUrl: githubUrl ?? this.githubUrl,
+      twitterUrl: twitterUrl ?? this.twitterUrl,
+      instagramUrl: instagramUrl ?? this.instagramUrl,
       isActive: isActive ?? this.isActive,
       joinDate: joinDate ?? this.joinDate,
-      email: email ?? this.email,
-      phone: phone ?? this.phone,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       skills: skills ?? this.skills,
-      achievements: achievements ?? this.achievements,
-      createdAt: createdAt,
-      updatedAt: updatedAt ?? DateTime.now(),
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      department: department ?? this.department,
+      yearOfStudy: yearOfStudy ?? this.yearOfStudy,
     );
+  }
+
+  bool get hasLinkedIn => linkedinUrl != null && linkedinUrl!.isNotEmpty;
+  bool get hasGitHub => githubUrl != null && githubUrl!.isNotEmpty;
+  bool get hasTwitter => twitterUrl != null && twitterUrl!.isNotEmpty;
+  bool get hasInstagram => instagramUrl != null && instagramUrl!.isNotEmpty;
+  bool get hasImage => imageUrl != null && imageUrl!.isNotEmpty;
+  
+  List<String> get socialLinks {
+    final links = <String>[];
+    if (hasLinkedIn) links.add(linkedinUrl!);
+    if (hasGitHub) links.add(githubUrl!);
+    if (hasTwitter) links.add(twitterUrl!);
+    if (hasInstagram) links.add(instagramUrl!);
+    return links;
   }
 }
 
