@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/responsive_wrapper.dart';
 import '../../../core/constants/app_constants.dart';
-import '../models/article.dart';
 import '../widgets/news_card.dart';
 
 class NewsPage extends StatefulWidget {

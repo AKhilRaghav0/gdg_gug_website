@@ -23,7 +23,7 @@ class _AdminTeamPageState extends State<AdminTeamPage> {
   }
 
   void _loadTeamMembers() {
-    _teamService.getTeamMembers().listen((members) {
+    _teamService.getActiveTeamMembers().listen((members) {
       setState(() {
         _teamMembers = members;
         _isLoading = false;
@@ -89,10 +89,10 @@ class _AdminTeamPageState extends State<AdminTeamPage> {
             CircleAvatar(
               radius: 30,
               backgroundColor: AppConstants.googleGreen,
-              backgroundImage: member.imageUrl.isNotEmpty 
-                  ? NetworkImage(member.imageUrl)
+              backgroundImage: member.hasImage 
+                  ? NetworkImage(member.imageUrl!)
                   : null,
-              child: member.imageUrl.isEmpty
+              child: !member.hasImage
                   ? Text(
                       member.name.isNotEmpty ? member.name[0].toUpperCase() : 'T',
                       style: const TextStyle(
@@ -139,13 +139,13 @@ class _AdminTeamPageState extends State<AdminTeamPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(member.category).withValues(alpha: 0.2),
+                          color: AppConstants.googleBlue.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          member.category.name.toUpperCase(),
+                          member.role.toUpperCase(),
                           style: TextStyle(
-                            color: _getCategoryColor(member.category),
+                            color: AppConstants.googleBlue,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -177,11 +177,11 @@ class _AdminTeamPageState extends State<AdminTeamPage> {
             // Social Links Preview
             Column(
               children: [
-                if (member.socialLinks.linkedin.isNotEmpty)
+                if (member.hasLinkedIn)
                   const Icon(Icons.business, size: 16, color: Colors.blue),
-                if (member.socialLinks.github.isNotEmpty)
+                if (member.hasGitHub)
                   const Icon(Icons.code, size: 16, color: Colors.black),
-                if (member.socialLinks.twitter.isNotEmpty)
+                if (member.hasTwitter)
                   const Icon(Icons.alternate_email, size: 16, color: Colors.lightBlue),
               ],
             ),
@@ -191,24 +191,5 @@ class _AdminTeamPageState extends State<AdminTeamPage> {
     );
   }
 
-  Color _getCategoryColor(TeamCategory category) {
-    switch (category) {
-      case TeamCategory.leadership:
-        return AppConstants.googleRed;
-      case TeamCategory.technical:
-        return AppConstants.googleBlue;
-      case TeamCategory.marketing:
-        return AppConstants.googleGreen;
-      case TeamCategory.design:
-        return AppConstants.googleYellow;
-      case TeamCategory.content:
-        return Colors.purple;
-      case TeamCategory.event:
-        return Colors.orange;
-      case TeamCategory.member:
-        return AppConstants.neutral600;
-      case TeamCategory.alumni:
-        return Colors.grey;
-    }
-  }
+
 } 

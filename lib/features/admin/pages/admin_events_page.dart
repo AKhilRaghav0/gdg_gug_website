@@ -23,7 +23,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
   }
 
   void _loadEvents() {
-    _eventService.getEvents().listen((events) {
+    _eventService.getMockEvents().listen((events) {
       setState(() {
         _events = events;
         _isLoading = false;
@@ -116,7 +116,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    event.status.name.toUpperCase(),
+                    event.isPublished ? 'PUBLISHED' : 'DRAFT',
                     style: const TextStyle(
                       color: AppConstants.googleBlue,
                       fontSize: 12,
@@ -132,7 +132,7 @@ class _AdminEventsPageState extends State<AdminEventsPage> {
                 Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 4),
                 Text(
-                  '${event.dateTime.day}/${event.dateTime.month}/${event.dateTime.year}',
+                  '${event.date.day}/${event.date.month}/${event.date.year}',
                   style: TextStyle(color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 16),

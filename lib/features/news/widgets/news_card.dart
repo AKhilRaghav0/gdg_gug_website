@@ -1,6 +1,61 @@
 import 'package:flutter/material.dart';
-import '../models/article.dart';
 import '../../../core/constants/app_constants.dart';
+
+// Import the Article model
+class Article {
+  final String id;
+  final String title;
+  final String content;
+  final String? image;
+  final Author author;
+  final String category;
+  final List<String> tags;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final bool isPublished;
+  final int viewCount;
+  final int likeCount;
+
+  Article({
+    required this.id,
+    required this.title,
+    required this.content,
+    this.image,
+    required this.author,
+    required this.category,
+    required this.tags,
+    required this.createdAt,
+    this.updatedAt,
+    required this.isPublished,
+    this.viewCount = 0,
+    this.likeCount = 0,
+  });
+
+  String get excerpt {
+    if (content.length <= 150) return content;
+    return '${content.substring(0, 150)}...';
+  }
+
+  String get readTime {
+    final words = content.split(' ').length;
+    final minutes = (words / 200).ceil();
+    return '$minutes min read';
+  }
+}
+
+class Author {
+  final String name;
+  final String? avatar;
+  final String? bio;
+  final String? email;
+
+  Author({
+    required this.name,
+    this.avatar,
+    this.bio,
+    this.email,
+  });
+}
 
 class NewsCard extends StatelessWidget {
   final Article article;
