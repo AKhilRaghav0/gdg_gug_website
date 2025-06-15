@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'config/routes/app_router.dart';
+import 'core/theme/app_theme.dart';
 
 void main() {
   runApp(const GDGGugApp());
@@ -9,16 +11,11 @@ class GDGGugApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'GDG Gurugram University',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4285F4), // Google Blue
-        ),
-        useMaterial3: true,
-      ),
-      home: const LandingPage(),
+      theme: AppTheme.lightTheme,
+      routerConfig: AppRouter.router,
     );
   }
 }
