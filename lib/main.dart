@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 import 'config/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/config/app_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Default configuration (fallback)
+  AppConfig.initialize(
+    environment: Environment.development,
+    platform: Platform.web,
+  );
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const GDGGugApp());
+  runGDGApp();
+}
+
+void runGDGApp() {
+  runApp(
+    ProviderScope(
+      child: const GDGGugApp(),
+    ),
+  );
 }
 
 class GDGGugApp extends StatelessWidget {
@@ -18,10 +35,22 @@ class GDGGugApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'GDG Gurugram University',
-      debugShowCheckedModeBanner: false,
+      title: AppConfig.appName,
+      debugShowCheckedModeBanner: AppConfig.enableDebugFeatures,
       theme: AppTheme.lightTheme,
       routerConfig: AppRouter.router,
+      builder: (context, child) {
+        // Add environment banner for development
+        if (AppConfig.showEnvironmentBanner) {
+          return Banner(
+            message: '${AppConfig.environment.name.toUpperCase()} ${AppConfig.platform.name.toUpperCase()}',
+            location: BannerLocation.topEnd,
+            color: AppConfig.isDevelopment ? Colors.red : Colors.green,
+            child: child!,
+          );
+        }
+        return child!;
+      },
     );
   }
 }

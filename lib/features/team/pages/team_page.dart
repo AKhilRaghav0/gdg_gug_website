@@ -9,12 +9,12 @@ class TeamPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildHeader(context),
-          _buildTeamGrid(context),
-          const SizedBox(height: 48),
-        ],
+        child: Column(
+          children: [
+            _buildHeader(context),
+            _buildTeamGrid(context),
+            const SizedBox(height: 48),
+          ],
       ),
     );
   }

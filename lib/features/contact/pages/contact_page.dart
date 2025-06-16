@@ -20,12 +20,12 @@ class _ContactPageState extends State<ContactPage> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildHeader(context),
-          _buildContactSection(context),
-          const SizedBox(height: 48),
-        ],
+        child: Column(
+          children: [
+            _buildHeader(context),
+            _buildContactSection(context),
+            const SizedBox(height: 48),
+          ],
       ),
     );
   }

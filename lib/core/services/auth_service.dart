@@ -23,22 +23,26 @@ class AuthService {
 
   // Get current app user
   Future<AppUser?> getCurrentAppUser() async {
-    final firebaseUser = currentUser;
-    if (firebaseUser == null) return null;
+    final user = currentUser;
+    if (user == null) return null;
 
-    try {
-      final doc = await _firestore
-          .collection(_usersCollection)
-          .doc(firebaseUser.uid)
-          .get();
+    return AppUser(
+      id: user.uid,
+      email: user.email ?? '',
+      name: user.displayName ?? '',
+      photoUrl: user.photoURL,
+      isAdmin: await _checkIsAdmin(user.email),
+    );
+  }
 
-      if (doc.exists) {
-        return AppUser.fromFirestore(doc);
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
+  // Check if user is admin
+  Future<bool> _checkIsAdmin(String? email) async {
+    // For development, you can add admin emails here
+    const adminEmails = [
+      'admin@gdggug.com',
+      'gdg@gug.ac.in',
+    ];
+    return email != null && adminEmails.map((e) => e.toLowerCase()).contains(email.toLowerCase());
   }
 
   // Check if email is allowed for admin access
@@ -55,38 +59,20 @@ class AuthService {
   }
 
   // Sign in with Google
-  Future<AppUser?> signInWithGoogle() async {
+  Future<User?> signInWithGoogle() async {
     try {
-      // Trigger the Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
-      // Check if email is allowed for admin access
-      if (!await isEmailAllowedForAdmin(googleUser.email)) {
-        await _googleSignIn.signOut();
-        throw Exception('Your email is not authorized for admin access');
-      }
-
-      // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the Google credentials
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      final User? firebaseUser = userCredential.user;
-
-      if (firebaseUser != null) {
-        // Create or update user in Firestore
-        await _createOrUpdateUser(firebaseUser);
-        return await getCurrentAppUser();
-      }
-
-      return null;
+      final UserCredential userCredential = 
+          await _auth.signInWithCredential(credential);
+      return userCredential.user;
     } catch (e) {
       throw Exception('Failed to sign in with Google: $e');
     }
@@ -94,14 +80,10 @@ class AuthService {
 
   // Sign out
   Future<void> signOut() async {
-    try {
-      await Future.wait([
-        _auth.signOut(),
-        _googleSignIn.signOut(),
-      ]);
-    } catch (e) {
-      throw Exception('Failed to sign out: $e');
-    }
+    await Future.wait([
+      _auth.signOut(),
+      _googleSignIn.signOut(),
+    ]);
   }
 
   // Create or update user in Firestore
@@ -212,7 +194,7 @@ class AuthService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => AppUser.fromFirestore(doc)).toList();
+      return snapshot.docs.map((doc) => AppUser.fromFirestore(doc, null)).toList();
     });
   }
 

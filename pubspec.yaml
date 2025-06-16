@@ -45,6 +45,7 @@ dependencies:
   share_plus: ^7.2.2
   image_picker: ^1.0.5
   file_picker: ^6.1.1
+  uuid: ^4.2.1
   
   # Networking
   http: ^1.1.2
@@ -58,13 +59,14 @@ dependencies:
   pull_to_refresh: ^2.0.0
   infinite_scroll_pagination: ^4.0.0
   
-  # Forms & Validation (using built-in Flutter forms for now)
-  # flutter_form_builder: ^9.1.1
-  # form_builder_validators: ^9.1.0
+  # Rich Text & Markdown Editing
+  flutter_markdown: ^0.6.18
+  markdown: ^7.2.2
+  flutter_quill: ^11.4.1
   
   # Media & Rich Content
   video_player: ^2.8.1
-  flutter_markdown: ^0.6.18
+  image: ^4.1.3
   
   # Calendar & DateTime
   table_calendar: ^3.0.9
@@ -75,6 +77,12 @@ dependencies:
   # QR Code
   qr_flutter: ^4.1.0
   mobile_scanner: ^3.5.7
+  
+  # Icons
+  heroicons: ^0.9.0
+  
+  # Form Validation
+  email_validator: ^2.1.17
 
 dev_dependencies:
   flutter_test:
@@ -85,11 +93,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
-  #   - assets/logos/
-  #   - assets/animations/
+  assets:
+    - assets/images/
   
   # fonts:
   #   - family: GoogleSans

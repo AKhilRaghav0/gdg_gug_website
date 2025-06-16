@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/responsive_wrapper.dart';
 import '../../../core/constants/app_constants.dart';
+import '../widgets/news_card.dart';
 
 class NewsPage extends StatefulWidget {
   const NewsPage({super.key});
@@ -17,13 +18,13 @@ class _NewsPageState extends State<NewsPage> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildHeader(context),
-          _buildSearchAndFilters(context),
-          _buildNewsGrid(context),
-          const SizedBox(height: 48),
-        ],
+        child: Column(
+          children: [
+            _buildHeader(context),
+            _buildSearchAndFilters(context),
+            _buildNewsGrid(context),
+            const SizedBox(height: 48),
+          ],
       ),
     );
   }

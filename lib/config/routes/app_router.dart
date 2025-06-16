@@ -6,6 +6,9 @@ import '../../features/events/pages/events_page.dart';
 import '../../features/news/pages/news_page.dart';
 import '../../features/about/pages/about_page.dart';
 import '../../features/contact/pages/contact_page.dart';
+import '../../features/tpo/pages/tpo_page.dart';
+import '../../features/circle/pages/circle_page.dart';
+import '../../features/messages/pages/messages_page.dart';
 import '../../features/auth/pages/admin_login_page.dart';
 import '../../features/admin/pages/admin_dashboard.dart';
 import '../../features/admin/pages/admin_events_page.dart';
@@ -47,26 +50,66 @@ class AppRouter {
           ),
           GoRoute(
             path: '/tpo',
-            builder: (context, state) => const PlaceholderPage(title: 'TPO'),
+            builder: (context, state) => const TpoPage(),
+          ),
+          GoRoute(
+            path: '/circle',
+            builder: (context, state) => const CirclePage(),
+          ),
+          GoRoute(
+            path: '/messages',
+            builder: (context, state) => const MessagesPage(),
           ),
         ],
       ),
-      // Admin routes (outside shell for different layout)
+      // Admin login route (standalone)
       GoRoute(
         path: '/admin/login',
         builder: (context, state) => const AdminLoginPage(),
       ),
-      GoRoute(
-        path: '/admin/dashboard',
-        builder: (context, state) => const AdminDashboard(),
-      ),
-      GoRoute(
-        path: '/admin/events',
-        builder: (context, state) => const AdminEventsPage(),
-      ),
-      GoRoute(
-        path: '/admin/team',
-        builder: (context, state) => const AdminTeamPage(),
+      // Admin routes with nested layout
+      ShellRoute(
+        builder: (context, state, child) {
+          return AdminDashboard(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: '/admin',
+            builder: (context, state) => const SizedBox.shrink(), // Empty widget, dashboard content handled by AdminDashboard
+          ),
+          GoRoute(
+            path: '/admin/events',
+            builder: (context, state) => const AdminEventsPage(),
+          ),
+          GoRoute(
+            path: '/admin/team',
+            builder: (context, state) => const AdminTeamPage(),
+          ),
+          GoRoute(
+            path: '/admin/content',
+            builder: (context, state) => const PlaceholderPage(title: 'Content Management'),
+          ),
+          GoRoute(
+            path: '/admin/circle',
+            builder: (context, state) => const PlaceholderPage(title: 'Circle Management'),
+          ),
+          GoRoute(
+            path: '/admin/users',
+            builder: (context, state) => const PlaceholderPage(title: 'User Management'),
+          ),
+          GoRoute(
+            path: '/admin/analytics',
+            builder: (context, state) => const PlaceholderPage(title: 'Analytics'),
+          ),
+          GoRoute(
+            path: '/admin/settings',
+            builder: (context, state) => const PlaceholderPage(title: 'Settings'),
+          ),
+          GoRoute(
+            path: '/admin/help',
+            builder: (context, state) => const PlaceholderPage(title: 'Help'),
+          ),
+        ],
       ),
     ],
   );
@@ -83,28 +126,58 @@ class PlaceholderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.construction,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '$title Page',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Coming Soon...',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey[600],
+      backgroundColor: Colors.transparent,
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(60),
+                ),
+                child: Icon(
+                  Icons.construction,
+                  size: 64,
+                  color: Colors.grey[400],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Coming Soon...',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Text(
+                  'This feature is under development',
+                  style: TextStyle(
+                    color: Colors.blue[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
