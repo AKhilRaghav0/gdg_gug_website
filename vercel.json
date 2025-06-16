@@ -2,9 +2,9 @@
   "github": {
     "silent": true
   },
-  "buildCommand": "flutter build web --release",
+  "buildCommand": "export PATH=$PATH:/vercel/.flutter/bin && flutter build web --release",
   "outputDirectory": "build/web",
-  "installCommand": "if [ ! -d \"/vercel/.flutter\" ]; then git clone https://github.com/flutter/flutter.git /vercel/.flutter; fi && /vercel/.flutter/bin/flutter doctor && /vercel/.flutter/bin/flutter pub get",
+  "installCommand": "if [ ! -d \"/vercel/.flutter\" ]; then git clone https://github.com/flutter/flutter.git /vercel/.flutter; fi && export PATH=$PATH:/vercel/.flutter/bin && flutter doctor && flutter pub get",
   "framework": null,
   "rewrites": [
     {
