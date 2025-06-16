@@ -57,6 +57,12 @@ class AppConstants {
   static const double defaultPadding = 16;
   static const double sectionPadding = 64;
   
+  // Border Radius
+  static const double radiusSmall = 4;
+  static const double radiusMedium = 8;
+  static const double radiusLarge = 16;
+  static const double radiusXLarge = 24;
+  
   // Animation Durations
   static const Duration shortAnimation = Duration(milliseconds: 200);
   static const Duration mediumAnimation = Duration(milliseconds: 300);

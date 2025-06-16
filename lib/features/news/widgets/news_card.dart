@@ -1,6 +1,61 @@
 import 'package:flutter/material.dart';
-import '../models/article.dart';
 import '../../../core/constants/app_constants.dart';
+
+// Article model for news cards
+class Article {
+  final String id;
+  final String title;
+  final String content;
+  final String? image;
+  final Author author;
+  final String category;
+  final List<String> tags;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final bool isPublished;
+  final int viewCount;
+  final int likeCount;
+
+  Article({
+    required this.id,
+    required this.title,
+    required this.content,
+    this.image,
+    required this.author,
+    required this.category,
+    required this.tags,
+    required this.createdAt,
+    this.updatedAt,
+    required this.isPublished,
+    this.viewCount = 0,
+    this.likeCount = 0,
+  });
+
+  String get excerpt {
+    if (content.length <= 150) return content;
+    return '${content.substring(0, 150)}...';
+  }
+
+  String get readTime {
+    final words = content.split(' ').length;
+    final minutes = (words / 200).ceil();
+    return '$minutes min read';
+  }
+}
+
+class Author {
+  final String name;
+  final String? avatar;
+  final String? bio;
+  final String? email;
+
+  Author({
+    required this.name,
+    this.avatar,
+    this.bio,
+    this.email,
+  });
+}
 
 class NewsCard extends StatefulWidget {
   final Article article;
@@ -117,7 +172,7 @@ class _NewsCardState extends State<NewsCard> {
                       // Content preview
                       Expanded(
                         child: Text(
-                          widget.article.content,
+                          widget.article.excerpt,
                           style: Theme.of(context).textTheme.bodyMedium,
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
@@ -143,46 +198,53 @@ class _NewsCardState extends State<NewsCard> {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              widget.article.author.name,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          if (widget.article.tags.isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppConstants.neutral200,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '#${widget.article.tags.first}',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 10,
-                                  color: AppConstants.neutral700,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.article.author.name,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
+                                if (widget.article.tags.isNotEmpty)
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '#${widget.article.tags.first}',
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            fontSize: 10,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _getCategoryColor(widget.article.category),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              widget.article.readTime,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Read more button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Handle article read more
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _getCategoryColor(widget.article.category),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          child: const Text('Read More'),
-                        ),
+                        ],
                       ),
                     ],
                   ),
@@ -196,55 +258,62 @@ class _NewsCardState extends State<NewsCard> {
   }
 
   IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'tech-insights':
-        return Icons.lightbulb;
-      case 'gdg-events':
-        return Icons.event;
-      case 'success-stories':
-        return Icons.star;
-      case 'developer-news':
+    switch (category.toLowerCase()) {
+      case 'tech':
         return Icons.code;
+      case 'design':
+        return Icons.design_services;
+      case 'business':
+        return Icons.business;
+      case 'tutorial':
+        return Icons.school;
       default:
         return Icons.article;
     }
   }
 
   Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'tech-insights':
+    switch (category.toLowerCase()) {
+      case 'tech':
         return AppConstants.googleBlue;
-      case 'gdg-events':
+      case 'design':
         return AppConstants.googleGreen;
-      case 'success-stories':
+      case 'business':
         return AppConstants.googleRed;
-      case 'developer-news':
+      case 'tutorial':
         return AppConstants.googleYellow;
       default:
-        return AppConstants.neutral600;
+        return AppConstants.neutral500;
     }
   }
 
   String _getCategoryLabel(String category) {
-    switch (category) {
-      case 'tech-insights':
-        return 'Tech Insights';
-      case 'gdg-events':
-        return 'GDG Events';
-      case 'success-stories':
-        return 'Success Stories';
-      case 'developer-news':
-        return 'Developer News';
+    switch (category.toLowerCase()) {
+      case 'tech':
+        return 'Technology';
+      case 'design':
+        return 'Design';
+      case 'business':
+        return 'Business';
+      case 'tutorial':
+        return 'Tutorial';
       default:
-        return 'News';
+        return category;
     }
   }
 
   String _formatDate(DateTime date) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 30) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 }

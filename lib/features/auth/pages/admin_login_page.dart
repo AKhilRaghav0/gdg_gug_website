@@ -198,7 +198,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       // For demo purposes, accept any email/password
       if (_emailController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
         if (mounted) {
-          context.go('/admin/dashboard');
+          context.go('/admin');
         }
       } else {
         _showErrorSnackBar('Invalid credentials');

@@ -18,7 +18,8 @@ class TeamService {
     TeamMember(
       id: '1',
       name: 'John Doe',
-      role: 'Lead Organizer',
+      role: 'Core Team',
+      position: 'Lead Organizer',
       bio: 'Passionate about Flutter and Android development. Leading the GDG community at GUG.',
       imageUrl: 'https://via.placeholder.com/150',
       email: 'john.doe@gug.ac.in',
@@ -31,7 +32,8 @@ class TeamService {
     TeamMember(
       id: '2',
       name: 'Jane Smith',
-      role: 'Technical Lead',
+      role: 'Tech Team',
+      position: 'Technical Lead',
       bio: 'Full-stack developer with expertise in web technologies and cloud computing.',
       imageUrl: 'https://via.placeholder.com/150',
       email: 'jane.smith@gug.ac.in',
@@ -43,7 +45,8 @@ class TeamService {
     TeamMember(
       id: '3',
       name: 'Mike Johnson',
-      role: 'Event Coordinator',
+      role: 'Core Team',
+      position: 'Event Coordinator',
       bio: 'Experienced in organizing tech events and building developer communities.',
       imageUrl: 'https://via.placeholder.com/150',
       email: 'mike.johnson@gug.ac.in',
@@ -54,7 +57,8 @@ class TeamService {
     TeamMember(
       id: '4',
       name: 'Sarah Wilson',
-      role: 'Marketing Lead',
+      role: 'Social Media/Content Team',
+      position: 'Marketing Lead',
       bio: 'Digital marketing specialist focusing on developer community engagement.',
       imageUrl: 'https://via.placeholder.com/150',
       email: 'sarah.wilson@gug.ac.in',
@@ -162,7 +166,7 @@ class TeamService {
     }
 
     return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => TeamMember.fromFirestore(doc)).toList();
+      return snapshot.docs.map((doc) => TeamMember.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
     });
   }
 

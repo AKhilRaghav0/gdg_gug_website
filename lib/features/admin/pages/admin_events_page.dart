@@ -8,6 +8,7 @@ import '../providers/admin_provider.dart';
 import '../../../shared/widgets/markdown_editor.dart';
 import '../../../shared/widgets/image_upload_widget.dart';
 import 'dart:typed_data';
+import '../../../core/constants/app_constants.dart';
 
 class AdminEventsPage extends ConsumerStatefulWidget {
   const AdminEventsPage({super.key});
@@ -89,7 +90,7 @@ class _AdminEventsPageState extends ConsumerState<AdminEventsPage> {
           icon: const Icon(Icons.add),
           label: const Text('Create Event'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[600],
+            backgroundColor: AppConstants.googleBlue,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
@@ -191,14 +192,19 @@ class _AdminEventsPageState extends ConsumerState<AdminEventsPage> {
                   ),
                   child: Text(
                     event.status,
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
                 const Spacer(),
                 PopupMenuButton<String>(
-                  onSelected: (value) => _handleEventAction(value, event),
+                  onSelected: (action) => _handleEventAction(action, event),
                   itemBuilder: (context) => [
                     const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                    const PopupMenuItem(value: 'duplicate', child: Text('Duplicate')),
                     const PopupMenuItem(value: 'delete', child: Text('Delete')),
                   ],
                 ),
@@ -213,20 +219,21 @@ class _AdminEventsPageState extends ConsumerState<AdminEventsPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              DateFormat('MMM dd, yyyy').format(event.date),
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-            const SizedBox(height: 4),
-            Text(
               event.location,
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const Spacer(),
-            Text(
-              '${event.currentAttendees}/${event.maxAttendees} attendees',
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.people, size: 16, color: Colors.grey[500]),
+                const SizedBox(width: 4),
+                Text(
+                  '${event.currentAttendees}/${event.maxAttendees}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
             ),
           ],
         ),
@@ -235,12 +242,17 @@ class _AdminEventsPageState extends ConsumerState<AdminEventsPage> {
   }
 
   Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Upcoming': return Colors.blue;
-      case 'Ongoing': return Colors.green;
-      case 'Completed': return Colors.grey;
-      case 'Cancelled': return Colors.red;
-      default: return Colors.grey;
+    switch (status.toLowerCase()) {
+      case 'upcoming':
+        return AppConstants.googleBlue;
+      case 'ongoing':
+        return AppConstants.googleGreen;
+      case 'completed':
+        return AppConstants.neutral500;
+      case 'cancelled':
+        return AppConstants.googleRed;
+      default:
+        return AppConstants.neutral400;
     }
   }
 
@@ -249,16 +261,19 @@ class _AdminEventsPageState extends ConsumerState<AdminEventsPage> {
       case 'edit':
         _showEventDialog(event: event);
         break;
+      case 'duplicate':
+        _showEventDialog(event: event, isDuplicate: true);
+        break;
       case 'delete':
         _deleteEvent(event);
         break;
     }
   }
 
-  void _showEventDialog({Event? event}) {
+  void _showEventDialog({Event? event, bool isDuplicate = false}) {
     showDialog(
       context: context,
-      builder: (context) => EventEditorDialog(event: event),
+      builder: (context) => EventEditorDialog(event: event, isDuplicate: isDuplicate),
     );
   }
 
@@ -273,12 +288,12 @@ class _AdminEventsPageState extends ConsumerState<AdminEventsPage> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () async {
-              Navigator.pop(context);
               await ref.read(adminControllerProvider.notifier).deleteEvent(event.id);
+              if (mounted) Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppConstants.googleRed),
             child: const Text('Delete'),
           ),
         ],
@@ -289,8 +304,9 @@ class _AdminEventsPageState extends ConsumerState<AdminEventsPage> {
 
 class EventEditorDialog extends ConsumerStatefulWidget {
   final Event? event;
+  final bool isDuplicate;
 
-  const EventEditorDialog({super.key, this.event});
+  const EventEditorDialog({super.key, this.event, this.isDuplicate = false});
 
   @override
   ConsumerState<EventEditorDialog> createState() => _EventEditorDialogState();
@@ -298,32 +314,37 @@ class EventEditorDialog extends ConsumerStatefulWidget {
 
 class _EventEditorDialogState extends ConsumerState<EventEditorDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _titleController;
-  late final TextEditingController _locationController;
-  late final TextEditingController _maxAttendeesController;
+  final _titleController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _maxAttendeesController = TextEditingController();
 
   String _description = '';
   String _category = 'Workshop';
   String _status = 'Upcoming';
   DateTime _selectedDate = DateTime.now();
-  bool _isPublished = false;
-  Uint8List? _selectedImageBytes;
+  bool _isPublished = true;
+  String? _imageUrl;
 
   @override
   void initState() {
     super.initState();
-    final event = widget.event;
-    
-    _titleController = TextEditingController(text: event?.title ?? '');
-    _locationController = TextEditingController(text: event?.location ?? '');
-    _maxAttendeesController = TextEditingController(text: event?.maxAttendees.toString() ?? '50');
-
-    if (event != null) {
-      _description = event.description;
-      _category = event.category;
-      _status = event.status;
-      _selectedDate = event.date;
-      _isPublished = event.isPublished;
+    if (widget.event != null && !widget.isDuplicate) {
+      _titleController.text = widget.event!.title;
+      _locationController.text = widget.event!.location;
+      _maxAttendeesController.text = widget.event!.maxAttendees.toString();
+      _description = widget.event!.description;
+      _category = widget.event!.category;
+      _status = widget.event!.status;
+      _selectedDate = widget.event!.date;
+      _isPublished = widget.event!.isPublished;
+      _imageUrl = widget.event!.imageUrl;
+    } else if (widget.event != null && widget.isDuplicate) {
+      _titleController.text = '${widget.event!.title} (Copy)';
+      _locationController.text = widget.event!.location;
+      _maxAttendeesController.text = widget.event!.maxAttendees.toString();
+      _description = widget.event!.description;
+      _category = widget.event!.category;
+      _imageUrl = widget.event!.imageUrl;
     }
   }
 
@@ -331,223 +352,187 @@ class _EventEditorDialogState extends ConsumerState<EventEditorDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.7,
-        height: MediaQuery.of(context).size.height * 0.8,
+        width: 800,
+        height: 600,
         padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    widget.event == null ? 'Create Event' : 'Edit Event',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              
-              Expanded(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Text(
+                  widget.event == null || widget.isDuplicate ? 'Create Event' : 'Edit Event',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: Form(
+                key: _formKey,
                 child: SingleChildScrollView(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          labelText: 'Event Title *',
-                          border: OutlineInputBorder(),
+                      // Basic Info Section
+                      _buildSection('Basic Information', [
+                        TextFormField(
+                          controller: _titleController,
+                          decoration: const InputDecoration(labelText: 'Event Title'),
+                          validator: (value) => value?.isEmpty == true ? 'Required' : null,
                         ),
-                        validator: (value) => value?.isEmpty == true ? 'Title is required' : null,
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _category,
-                              onChanged: (value) => setState(() => _category = value!),
-                              items: ['Workshop', 'Seminar', 'Bootcamp', 'Webinar']
-                                  .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
-                                  .toList(),
-                              decoration: const InputDecoration(
-                                labelText: 'Category *',
-                                border: OutlineInputBorder(),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: _category,
+                                onChanged: (value) => setState(() => _category = value!),
+                                items: ['Workshop', 'Seminar', 'Bootcamp', 'Conference', 'Meetup']
+                                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                                    .toList(),
+                                decoration: const InputDecoration(labelText: 'Category'),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _status,
-                              onChanged: (value) => setState(() => _status = value!),
-                              items: ['Upcoming', 'Ongoing', 'Completed']
-                                  .map((status) => DropdownMenuItem(value: status, child: Text(status)))
-                                  .toList(),
-                              decoration: const InputDecoration(
-                                labelText: 'Status',
-                                border: OutlineInputBorder(),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: _status,
+                                onChanged: (value) => setState(() => _status = value!),
+                                items: ['Upcoming', 'Ongoing', 'Completed', 'Cancelled']
+                                    .map((status) => DropdownMenuItem(value: status, child: Text(status)))
+                                    .toList(),
+                                decoration: const InputDecoration(labelText: 'Status'),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _locationController,
-                              decoration: const InputDecoration(
-                                labelText: 'Location *',
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) => value?.isEmpty == true ? 'Location is required' : null,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _maxAttendeesController,
-                              decoration: const InputDecoration(
-                                labelText: 'Max Attendees *',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) => value?.isEmpty == true ? 'Max attendees is required' : null,
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      InkWell(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDate,
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days: 365)),
-                          );
-                          if (date != null) {
-                            setState(() => _selectedDate = date);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today),
-                              const SizedBox(width: 8),
-                              Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
-                              const Spacer(),
-                              const Icon(Icons.arrow_drop_down),
-                            ],
-                          ),
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _locationController,
+                          decoration: const InputDecoration(labelText: 'Location'),
+                          validator: (value) => value?.isEmpty == true ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _maxAttendeesController,
+                          decoration: const InputDecoration(labelText: 'Max Attendees'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) => value?.isEmpty == true ? 'Required' : null,
+                        ),
+                      ]),
                       
                       const SizedBox(height: 24),
                       
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('Description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      ),
-                      const SizedBox(height: 8),
-                      MarkdownEditor(
-                        initialValue: _description,
-                        onChanged: (value) => _description = value,
-                        height: 200,
-                      ),
+                                             // Description Section
+                       _buildSection('Description', [
+                         MarkdownEditor(
+                           initialValue: _description,
+                           onChanged: (text) => _description = text,
+                           height: 200,
+                         ),
+                       ]),
+                       
+                       const SizedBox(height: 24),
+                       
+                       // Image Section
+                       _buildSection('Event Image', [
+                         ImageUploadWidget(
+                           initialImageUrl: _imageUrl,
+                           onImageSelected: (bytes) {
+                             // Handle image selection
+                           },
+                           onImageUploaded: (url) => setState(() => _imageUrl = url),
+                           folder: 'events',
+                         ),
+                       ]),
                       
                       const SizedBox(height: 24),
                       
-                      CheckboxListTile(
-                        title: const Text('Published'),
-                        value: _isPublished,
-                        onChanged: (value) => setState(() => _isPublished = value!),
-                        controlAffinity: ListTileControlAffinity.leading,
-                      ),
+                      // Settings Section
+                      _buildSection('Settings', [
+                        SwitchListTile(
+                          title: const Text('Published'),
+                          subtitle: const Text('Event is visible to users'),
+                          value: _isPublished,
+                          onChanged: (value) => setState(() => _isPublished = value),
+                        ),
+                      ]),
                     ],
                   ),
                 ),
               ),
-              
-              const SizedBox(height: 24),
-              
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: _saveEvent,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.googleBlue,
+                    foregroundColor: Colors.white,
                   ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: _saveEvent,
-                    child: const Text('Save Event'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  child: const Text('Save'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        ...children,
+      ],
     );
   }
 
   Future<void> _saveEvent() async {
     if (!_formKey.currentState!.validate()) return;
 
-    try {
-      final event = Event(
-        id: widget.event?.id ?? const Uuid().v4(),
-        title: _titleController.text,
-        description: _description,
-        date: _selectedDate,
-        location: _locationController.text,
-        category: _category,
-        maxAttendees: int.parse(_maxAttendeesController.text),
-        currentAttendees: widget.event?.currentAttendees ?? 0,
-        status: _status,
-        isPublished: _isPublished,
-        createdAt: widget.event?.createdAt ?? DateTime.now(),
-      );
+    final event = Event(
+      id: widget.event != null && !widget.isDuplicate ? widget.event!.id : '',
+      title: _titleController.text,
+      description: _description,
+      date: _selectedDate,
+      location: _locationController.text,
+      imageUrl: _imageUrl,
+      category: _category,
+      maxAttendees: int.parse(_maxAttendeesController.text),
+      currentAttendees: widget.event?.currentAttendees ?? 0,
+      status: _status,
+      isPublished: _isPublished,
+    );
 
-      if (widget.event == null) {
+    try {
+      if (widget.event == null || widget.isDuplicate) {
         await ref.read(adminControllerProvider.notifier).addEvent(event);
       } else {
         await ref.read(adminControllerProvider.notifier).updateEvent(event.id, event);
       }
-
-      Navigator.pop(context);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.event == null ? 'Event created!' : 'Event updated!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save event: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error saving event: $e')),
       );
     }
   }

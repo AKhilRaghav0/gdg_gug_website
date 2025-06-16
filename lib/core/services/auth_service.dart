@@ -194,7 +194,7 @@ class AuthService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => AppUser.fromFirestore(doc)).toList();
+      return snapshot.docs.map((doc) => AppUser.fromFirestore(doc, null)).toList();
     });
   }
 
