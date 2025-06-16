@@ -42,7 +42,7 @@ class AuthService {
       'admin@gdggug.com',
       'gdg@gug.ac.in',
     ];
-    return adminEmails.contains(email);
+    return email != null && adminEmails.map((e) => e.toLowerCase()).contains(email.toLowerCase());
   }
 
   // Check if email is allowed for admin access
