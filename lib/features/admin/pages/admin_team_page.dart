@@ -31,245 +31,210 @@ class _AdminTeamPageState extends ConsumerState<AdminTeamPage> {
   @override
   Widget build(BuildContext context) {
     final teamMembersAsync = ref.watch(teamMembersStreamProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 1024;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: teamMembersAsync.when(
-        data: (members) => _buildContent(members),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-              const SizedBox(height: 16),
-              Text('Error loading team members: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(teamMembersStreamProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent(List<TeamMember> allMembers) {
-    final filteredMembers = _getFilteredMembers(allMembers);
-    
-    return Column(
-      children: [
-        _buildHeaderSection(allMembers),
-        const SizedBox(height: 24),
-        _buildSearchAndFilter(),
-        const SizedBox(height: 24),
-        Expanded(
-          child: _buildTeamMembersList(filteredMembers),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeaderSection(List<TeamMember> members) {
-    final roleStats = _getRoleStatistics(members);
-    
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppConstants.googleGreen,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
+      backgroundColor: AppConstants.neutral50,
+      body: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // Header Section
+          Container(
+            padding: EdgeInsets.all(isDesktop ? 32 : 16),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: AppConstants.neutral200)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
+                    Icon(Icons.people, size: isDesktop ? 32 : 24, color: AppConstants.googleBlue),
+                    SizedBox(width: isDesktop ? 16 : 8),
                     Text(
-                      'Team Overview',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
+                      'Team Management',
+                      style: TextStyle(
+                        fontSize: isDesktop ? 28 : 20,
                         fontWeight: FontWeight.bold,
+                        color: AppConstants.neutral900,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Manage your GDG team members and roles',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
+                    const Spacer(),
+                    ElevatedButton.icon(
+                      onPressed: () => _showTeamMemberDialog(context),
+                      icon: const Icon(Icons.add),
+                      label: Text(isDesktop ? 'Add Member' : 'Add'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppConstants.googleBlue,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktop ? 24 : 16,
+                          vertical: isDesktop ? 16 : 12,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Row(
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () => _showAddMemberDialog(),
-                    icon: const Icon(Icons.person_add),
-                    label: const Text('Add Member'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppConstants.googleGreen,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '${members.length}',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                if (isDesktop) ...[
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          onChanged: (value) => setState(() => _searchQuery = value),
+                          decoration: InputDecoration(
+                            hintText: 'Search team members...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppConstants.neutral300),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
                           ),
                         ),
-                        Text(
-                          'Total Members',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedRole,
+                          decoration: InputDecoration(
+                            labelText: 'Role',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
                           ),
+                          items: _teamRoles
+                              .map((role) => DropdownMenuItem(value: role, child: Text(role)))
+                              .toList(),
+                          onChanged: (value) => setState(() => _selectedRole = value!),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ),
-          if (roleStats.isNotEmpty) ...[
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 80,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: roleStats.length,
-                itemBuilder: (context, index) {
-                  final stat = roleStats[index];
-                  return Container(
-                    width: 120,
-                    margin: const EdgeInsets.only(right: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+
+          // Team Members List
+          Expanded(
+            child: teamMembersAsync.when(
+              data: (members) {
+                final filteredMembers = _filterMembers(members);
+                
+                if (filteredMembers.isEmpty) {
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Icon(Icons.people_outline, size: 64, color: AppConstants.neutral400),
+                        const SizedBox(height: 16),
                         Text(
-                          stat['count'].toString(),
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          'No team members found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppConstants.neutral600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Text(
-                          stat['role'] as String,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          'Add your first team member to get started',
+                          style: TextStyle(color: AppConstants.neutral500),
                         ),
                       ],
                     ),
                   );
-                },
+                }
+
+                return isDesktop ? _buildDesktopMembersList(filteredMembers) : _buildMobileMembersList(filteredMembers);
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: AppConstants.googleRed),
+                    const SizedBox(height: 16),
+                    Text('Error loading team members: $error'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(teamMembersStreamProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchAndFilter() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: TextField(
-                onChanged: (value) => setState(() => _searchQuery = value),
-                decoration: InputDecoration(
-                  hintText: 'Search team members...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                value: _selectedRole,
-                onChanged: (value) => setState(() => _selectedRole = value!),
-                items: _teamRoles
-                    .map((role) => DropdownMenuItem(value: role, child: Text(role)))
-                    .toList(),
-                decoration: InputDecoration(
-                  labelText: 'Filter by Role',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-          ],
+  Widget _buildDesktopMembersList(List<TeamMember> members) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          crossAxisSpacing: 24,
+          mainAxisSpacing: 24,
+          childAspectRatio: 0.75,
         ),
+        itemCount: members.length,
+        itemBuilder: (context, index) => _buildMemberCard(members[index], isDesktop: true),
       ),
     );
   }
 
-  Widget _buildTeamMembersList(List<TeamMember> members) {
-    if (members.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text('No team members found', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
-          ],
-        ),
-      );
-    }
-
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
-      ),
+  Widget _buildMobileMembersList(List<TeamMember> members) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
       itemCount: members.length,
-      itemBuilder: (context, index) => _buildMemberCard(members[index]),
+      itemBuilder: (context, index) => Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: _buildMemberCard(members[index], isDesktop: false),
+      ),
     );
   }
 
-  Widget _buildMemberCard(TeamMember member) {
+  List<TeamMember> _filterMembers(List<TeamMember> allMembers) {
+    return allMembers.where((member) {
+      final matchesSearch = _searchQuery.isEmpty ||
+          member.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          member.role.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          member.position.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesRole = _selectedRole == 'All' || member.role == _selectedRole;
+      return matchesSearch && matchesRole && member.isActive;
+    }).toList();
+  }
+
+  void _showTeamMemberDialog(BuildContext context, {TeamMember? member, bool isDuplicate = false}) {
+    showDialog(
+      context: context,
+      builder: (context) => MemberEditorDialog(
+        member: member,
+        isDuplicate: isDuplicate,
+      ),
+    );
+  }
+
+  Widget _buildMemberCard(TeamMember member, {required bool isDesktop}) {
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Header with role badge and menu
             Row(
               children: [
                 Container(
@@ -295,76 +260,107 @@ class _AdminTeamPageState extends ConsumerState<AdminTeamPage> {
                     const PopupMenuItem(value: 'duplicate', child: Text('Duplicate')),
                     const PopupMenuItem(value: 'delete', child: Text('Delete')),
                   ],
+                  child: Icon(Icons.more_vert, color: AppConstants.neutral500),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Center(
-              child: CircleAvatar(
-                radius: 30,
-                backgroundImage: member.imageUrl != null 
-                    ? NetworkImage(member.imageUrl!) 
-                    : null,
-                child: member.imageUrl == null 
-                    ? Text(member.name.substring(0, 2).toUpperCase())
-                    : null,
-              ),
+            const SizedBox(height: 16),
+
+            // Profile Image
+            CircleAvatar(
+              radius: isDesktop ? 40 : 30,
+              backgroundImage: member.imageUrl != null 
+                  ? NetworkImage(member.imageUrl!) 
+                  : null,
+              backgroundColor: _getRoleColor(member.role).withOpacity(0.2),
+              child: member.imageUrl == null 
+                  ? Text(
+                      member.name.substring(0, 2).toUpperCase(),
+                      style: TextStyle(
+                        fontSize: isDesktop ? 20 : 16,
+                        fontWeight: FontWeight.bold,
+                        color: _getRoleColor(member.role),
+                      ),
+                    )
+                  : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+
+            // Member Info
             Text(
               member.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              maxLines: 1,
+              style: TextStyle(
+                fontSize: isDesktop ? 16 : 14,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
               member.position,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              maxLines: 1,
+              style: TextStyle(
+                fontSize: isDesktop ? 14 : 12,
+                color: AppConstants.neutral600,
+              ),
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            if (member.bio.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                member.bio,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppConstants.neutral500,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ],
+            const Spacer(),
+
+            // Social Links
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (member.hasLinkedIn)
-                  Icon(Icons.business, size: 16, color: Colors.grey[500]),
-                if (member.hasGitHub)
-                  Icon(Icons.code, size: 16, color: Colors.grey[500]),
-                if (member.hasTwitter)
-                  Icon(Icons.alternate_email, size: 16, color: Colors.grey[500]),
+                if (member.linkedinUrl != null)
+                  Icon(Icons.business, size: 16, color: AppConstants.neutral500),
+                if (member.githubUrl != null) ...[
+                  const SizedBox(width: 8),
+                  Icon(Icons.code, size: 16, color: AppConstants.neutral500),
+                ],
+                if (member.twitterUrl != null) ...[
+                  const SizedBox(width: 8),
+                  Icon(Icons.alternate_email, size: 16, color: AppConstants.neutral500),
+                ],
               ],
+            ),
+            const SizedBox(height: 8),
+
+            // Status indicator
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: member.isActive ? AppConstants.googleGreen : AppConstants.neutral400,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                member.isActive ? 'Active' : 'Inactive',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  List<TeamMember> _getFilteredMembers(List<TeamMember> allMembers) {
-    return allMembers.where((member) {
-      final matchesSearch = _searchQuery.isEmpty ||
-          member.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          member.role.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          member.position.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesRole = _selectedRole == 'All' || member.role == _selectedRole;
-      return matchesSearch && matchesRole && member.isActive;
-    }).toList();
-  }
-
-  List<Map<String, dynamic>> _getRoleStatistics(List<TeamMember> members) {
-    final Map<String, int> roleCounts = {};
-    for (final member in members.where((m) => m.isActive)) {
-      roleCounts[member.role] = (roleCounts[member.role] ?? 0) + 1;
-    }
-    
-    return roleCounts.entries
-        .map((entry) => {'role': entry.key, 'count': entry.value})
-        .toList()
-      ..sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
   }
 
   Color _getRoleColor(String role) {
@@ -377,6 +373,12 @@ class _AdminTeamPageState extends ConsumerState<AdminTeamPage> {
         return AppConstants.googleRed;
       case 'graphic designing team':
         return AppConstants.googleYellow;
+      case 'data management team':
+        return Colors.purple;
+      case 'event management team':
+        return Colors.orange;
+      case 'outreach team':
+        return Colors.teal;
       default:
         return AppConstants.neutral600;
     }
@@ -385,32 +387,18 @@ class _AdminTeamPageState extends ConsumerState<AdminTeamPage> {
   void _handleMemberAction(String action, TeamMember member) {
     switch (action) {
       case 'edit':
-        _showEditMemberDialog(member);
+        _showTeamMemberDialog(context, member: member);
         break;
       case 'duplicate':
-        _showEditMemberDialog(member, isDuplicate: true);
+        _showTeamMemberDialog(context, member: member, isDuplicate: true);
         break;
       case 'delete':
-        _deleteMember(member);
+        _showDeleteMemberDialog(member);
         break;
     }
   }
 
-  void _showAddMemberDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => const MemberEditorDialog(),
-    );
-  }
-
-  void _showEditMemberDialog(TeamMember member, {bool isDuplicate = false}) {
-    showDialog(
-      context: context,
-      builder: (context) => MemberEditorDialog(member: member, isDuplicate: isDuplicate),
-    );
-  }
-
-  void _deleteMember(TeamMember member) {
+  void _showDeleteMemberDialog(TeamMember member) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
