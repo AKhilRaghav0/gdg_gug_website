@@ -1,5 +1,6 @@
 enum Environment {
   development,
+  staging,
   production,
 }
 
@@ -42,6 +43,9 @@ class AppConfig {
       case Environment.development:
         _initializeDevelopment();
         break;
+      case Environment.staging:
+        _initializeStaging();
+        break;
       case Environment.production:
         _initializeProduction();
         break;
@@ -56,6 +60,14 @@ class AppConfig {
     _enableCrashlytics = false;
   }
 
+  static void _initializeStaging() {
+    _appName = isApp ? 'GDG GUG Staging' : 'GDG GUG Staging Web';
+    _apiBaseUrl = 'https://staging-api.gdggug.com';
+    _firebaseProjectId = 'gdg-gug-staging';
+    _enableAnalytics = true;
+    _enableCrashlytics = false;
+  }
+
   static void _initializeProduction() {
     _appName = isApp ? 'GDG Gurugram University' : 'GDG Gurugram University';
     _apiBaseUrl = 'https://api.gdggug.com';
@@ -66,4 +78,18 @@ class AppConfig {
 
   static bool get showEnvironmentBanner => isDevelopment;
   static bool get enableDebugFeatures => isDevelopment;
+
+  // App Information
+  static const String appVersion = '1.0.0';
+  
+  // Contact Information
+  static const String contactEmail = 'gdg@gug.ac.in';
+  static const String contactPhone = '+91-XXXX-XXXXXX';
+  static const String address = 'GUG Campus, Sector 51, Gurugram, Haryana';
+  
+  // Social Media Links
+  static const String linkedinUrl = 'https://linkedin.com/company/gdg-gug';
+  static const String twitterUrl = 'https://twitter.com/gdg_gug';
+  static const String instagramUrl = 'https://instagram.com/gdg_gug';
+  static const String githubUrl = 'https://github.com/gdggug';
 } 

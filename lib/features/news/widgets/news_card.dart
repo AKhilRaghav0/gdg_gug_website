@@ -2,218 +2,249 @@ import 'package:flutter/material.dart';
 import '../models/article.dart';
 import '../../../core/constants/app_constants.dart';
 
-class NewsCard extends StatelessWidget {
+class NewsCard extends StatefulWidget {
   final Article article;
 
-  const NewsCard({
-    super.key,
-    required this.article,
-  });
+  const NewsCard({super.key, required this.article});
+
+  @override
+  State<NewsCard> createState() => _NewsCardState();
+}
+
+class _NewsCardState extends State<NewsCard> {
+  bool isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Article image
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              color: AppConstants.neutral100,
-            ),
-            child: article.image != null
-                ? ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                    child: Image.network(
-                      article.image!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildPlaceholderImage();
-                      },
-                    ),
-                  )
-                : _buildPlaceholderImage(),
+    return MouseRegion(
+      onEnter: (_) => setState(() => isHovered = true),
+      onExit: (_) => setState(() => isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        transform: Matrix4.identity()..translate(0.0, isHovered ? -8.0 : 0.0),
+        child: Card(
+          elevation: isHovered ? 12 : 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          
-          // Article content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Category badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getCategoryColor(article.category).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      article.category,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: _getCategoryColor(article.category),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Article image placeholder
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                  gradient: LinearGradient(
+                    colors: [
+                      _getCategoryColor(widget.article.category).withOpacity(0.3),
+                      _getCategoryColor(widget.article.category).withOpacity(0.6),
+                    ],
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        _getCategoryIcon(widget.article.category),
+                        size: 64,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Article title
-                  Text(
-                    article.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Article excerpt
-                  Expanded(
-                    child: Text(
-                      article.excerpt,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppConstants.neutral600,
-                        height: 1.4,
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _getCategoryColor(widget.article.category),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          _getCategoryLabel(widget.article.category),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  
-                  // Article metadata
-                  Row(
+                  ],
+                ),
+              ),
+              
+              // Article details
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Author avatar
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: AppConstants.googleBlue.withOpacity(0.1),
-                        child: article.author.avatar != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  article.author.avatar!,
-                                  width: 24,
-                                  height: 24,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
-                                      Icons.person,
-                                      size: 16,
-                                      color: AppConstants.googleBlue,
-                                    );
-                                  },
-                                ),
-                              )
-                            : Icon(
-                                Icons.person,
-                                size: 16,
-                                color: AppConstants.googleBlue,
-                              ),
+                      // Date
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 14,
+                            color: AppConstants.neutral600,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDate(widget.article.createdAt),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppConstants.neutral600,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 8),
                       
-                      const SizedBox(width: 8),
+                      // Title
+                      Text(
+                        widget.article.title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
                       
-                      // Author name and date
+                      // Content preview
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              article.author.name,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              _formatDate(article.createdAt),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppConstants.neutral500,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          widget.article.content,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       
-                      // Read time
-                      Text(
-                        article.readTime,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppConstants.neutral500,
+                      const SizedBox(height: 16),
+                      
+                      // Author and tags
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 12,
+                            backgroundColor: AppConstants.googleBlue,
+                            child: Text(
+                              widget.article.author.name.substring(0, 1).toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              widget.article.author.name,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (widget.article.tags.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppConstants.neutral200,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '#${widget.article.tags.first}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontSize: 10,
+                                  color: AppConstants.neutral700,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Read more button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Handle article read more
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _getCategoryColor(widget.article.category),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text('Read More'),
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderImage() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        color: AppConstants.neutral100,
-      ),
-      child: Center(
-        child: Icon(
-          Icons.article,
-          size: 48,
-          color: AppConstants.neutral400,
         ),
       ),
     );
   }
 
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'tech-insights':
+        return Icons.lightbulb;
+      case 'gdg-events':
+        return Icons.event;
+      case 'success-stories':
+        return Icons.star;
+      case 'developer-news':
+        return Icons.code;
+      default:
+        return Icons.article;
+    }
+  }
+
   Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
+    switch (category) {
       case 'tech-insights':
         return AppConstants.googleBlue;
       case 'gdg-events':
         return AppConstants.googleGreen;
       case 'success-stories':
-        return AppConstants.googleYellow;
-      case 'developer-news':
         return AppConstants.googleRed;
+      case 'developer-news':
+        return AppConstants.googleYellow;
       default:
-        return AppConstants.googleBlue;
+        return AppConstants.neutral600;
+    }
+  }
+
+  String _getCategoryLabel(String category) {
+    switch (category) {
+      case 'tech-insights':
+        return 'Tech Insights';
+      case 'gdg-events':
+        return 'GDG Events';
+      case 'success-stories':
+        return 'Success Stories';
+      case 'developer-news':
+        return 'Developer News';
+      default:
+        return 'News';
     }
   }
 
   String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-    
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        return '${difference.inMinutes}m ago';
-      }
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
-} 
+}

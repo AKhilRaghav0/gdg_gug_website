@@ -10,6 +10,10 @@ class Event {
   final String category;
   final int maxAttendees;
   final int currentAttendees;
+  final int registeredCount;
+  final String status;
+  final String duration;
+  final String? registrationUrl;
   final bool isPublished;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -29,6 +33,10 @@ class Event {
     required this.category,
     required this.maxAttendees,
     required this.currentAttendees,
+    int? registeredCount,
+    this.status = 'Upcoming',
+    this.duration = '2 hours',
+    this.registrationUrl,
     required this.isPublished,
     this.createdAt,
     this.updatedAt,
@@ -37,7 +45,7 @@ class Event {
     this.fee,
     this.isOnline = false,
     this.meetingLink,
-  });
+  }) : registeredCount = registeredCount ?? currentAttendees;
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
@@ -50,6 +58,10 @@ class Event {
       category: json['category'] as String,
       maxAttendees: json['maxAttendees'] as int,
       currentAttendees: json['currentAttendees'] as int,
+      registeredCount: json['registeredCount'] as int? ?? json['currentAttendees'] as int,
+      status: json['status'] as String? ?? 'Upcoming',
+      duration: json['duration'] as String? ?? '2 hours',
+      registrationUrl: json['registrationUrl'] as String?,
       isPublished: json['isPublished'] as bool,
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt'] as String)
@@ -76,6 +88,10 @@ class Event {
       'category': category,
       'maxAttendees': maxAttendees,
       'currentAttendees': currentAttendees,
+      'registeredCount': registeredCount,
+      'status': status,
+      'duration': duration,
+      'registrationUrl': registrationUrl,
       'isPublished': isPublished,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
@@ -97,6 +113,10 @@ class Event {
     String? category,
     int? maxAttendees,
     int? currentAttendees,
+    int? registeredCount,
+    String? status,
+    String? duration,
+    String? registrationUrl,
     bool? isPublished,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -116,6 +136,10 @@ class Event {
       category: category ?? this.category,
       maxAttendees: maxAttendees ?? this.maxAttendees,
       currentAttendees: currentAttendees ?? this.currentAttendees,
+      registeredCount: registeredCount ?? this.registeredCount,
+      status: status ?? this.status,
+      duration: duration ?? this.duration,
+      registrationUrl: registrationUrl ?? this.registrationUrl,
       isPublished: isPublished ?? this.isPublished,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -133,6 +157,62 @@ class Event {
   bool get isPast => date.isBefore(DateTime.now());
   bool get isUpcoming => date.isAfter(DateTime.now());
   bool get isFree => fee == null || fee == 0.0;
+
+  // Firestore serialization methods
+  factory Event.fromFirestore(Map<String, dynamic> data, String documentId) {
+    return Event(
+      id: documentId,
+      title: data['title'] as String,
+      description: data['description'] as String,
+      date: (data['date'] as Timestamp).toDate(),
+      location: data['location'] as String,
+      imageUrl: data['imageUrl'] as String?,
+      category: data['category'] as String,
+      maxAttendees: data['maxAttendees'] as int,
+      currentAttendees: data['currentAttendees'] as int,
+      registeredCount: data['registeredCount'] as int? ?? data['currentAttendees'] as int,
+      status: data['status'] as String? ?? 'Upcoming',
+      duration: data['duration'] as String? ?? '2 hours',
+      registrationUrl: data['registrationUrl'] as String?,
+      isPublished: data['isPublished'] as bool,
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] as Timestamp).toDate()
+          : null,
+      updatedAt: data['updatedAt'] != null 
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
+      tags: (data['tags'] as List<dynamic>?)?.cast<String>() ?? [],
+      organizer: data['organizer'] as String?,
+      fee: data['fee'] as double?,
+      isOnline: data['isOnline'] as bool? ?? false,
+      meetingLink: data['meetingLink'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'title': title,
+      'description': description,
+      'date': Timestamp.fromDate(date),
+      'location': location,
+      'imageUrl': imageUrl,
+      'category': category,
+      'maxAttendees': maxAttendees,
+      'currentAttendees': currentAttendees,
+      'registeredCount': registeredCount,
+      'status': status,
+      'duration': duration,
+      'registrationUrl': registrationUrl,
+      'isPublished': isPublished,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'tags': tags,
+      'organizer': organizer,
+      'fee': fee,
+      'isOnline': isOnline,
+      'meetingLink': meetingLink,
+    };
+  }
 }
 
 enum EventType {

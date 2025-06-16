@@ -4,6 +4,7 @@ class TeamMember {
   final String id;
   final String name;
   final String role;
+  final String position;
   final String bio;
   final String? imageUrl;
   final String email;
@@ -24,6 +25,7 @@ class TeamMember {
     required this.id,
     required this.name,
     required this.role,
+    required this.position,
     required this.bio,
     this.imageUrl,
     required this.email,
@@ -46,6 +48,7 @@ class TeamMember {
       id: json['id'] as String,
       name: json['name'] as String,
       role: json['role'] as String,
+      position: json['position'] as String? ?? '',
       bio: json['bio'] as String,
       imageUrl: json['imageUrl'] as String?,
       email: json['email'] as String,
@@ -73,6 +76,7 @@ class TeamMember {
       'id': id,
       'name': name,
       'role': role,
+      'position': position,
       'bio': bio,
       'imageUrl': imageUrl,
       'email': email,
@@ -91,10 +95,63 @@ class TeamMember {
     };
   }
 
+  // Firestore serialization methods
+  factory TeamMember.fromFirestore(Map<String, dynamic> data, String documentId) {
+    return TeamMember(
+      id: documentId,
+      name: data['name'] as String,
+      role: data['role'] as String,
+      position: data['position'] as String? ?? '',
+      bio: data['bio'] as String,
+      imageUrl: data['imageUrl'] as String?,
+      email: data['email'] as String,
+      linkedinUrl: data['linkedinUrl'] as String?,
+      githubUrl: data['githubUrl'] as String?,
+      twitterUrl: data['twitterUrl'] as String?,
+      instagramUrl: data['instagramUrl'] as String?,
+      isActive: data['isActive'] as bool,
+      joinDate: (data['joinDate'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] as Timestamp).toDate()
+          : null,
+      updatedAt: data['updatedAt'] != null 
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
+      skills: (data['skills'] as List<dynamic>?)?.cast<String>() ?? [],
+      phoneNumber: data['phoneNumber'] as String?,
+      department: data['department'] as String?,
+      yearOfStudy: data['yearOfStudy'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'role': role,
+      'position': position,
+      'bio': bio,
+      'imageUrl': imageUrl,
+      'email': email,
+      'linkedinUrl': linkedinUrl,
+      'githubUrl': githubUrl,
+      'twitterUrl': twitterUrl,
+      'instagramUrl': instagramUrl,
+      'isActive': isActive,
+      'joinDate': Timestamp.fromDate(joinDate),
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'skills': skills,
+      'phoneNumber': phoneNumber,
+      'department': department,
+      'yearOfStudy': yearOfStudy,
+    };
+  }
+
   TeamMember copyWith({
     String? id,
     String? name,
     String? role,
+    String? position,
     String? bio,
     String? imageUrl,
     String? email,
@@ -115,6 +172,7 @@ class TeamMember {
       id: id ?? this.id,
       name: name ?? this.name,
       role: role ?? this.role,
+      position: position ?? this.position,
       bio: bio ?? this.bio,
       imageUrl: imageUrl ?? this.imageUrl,
       email: email ?? this.email,
