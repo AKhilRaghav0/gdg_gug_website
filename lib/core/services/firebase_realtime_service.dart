@@ -27,6 +27,28 @@ class FirebaseRealtimeService {
       return data.entries.map((entry) {
         final eventData = Map<String, dynamic>.from(entry.value as Map);
         eventData['id'] = entry.key;
+        
+        // Convert Firebase timestamps to proper formats
+        if (eventData['createdAt'] is int) {
+          eventData['createdAt'] = DateTime.fromMillisecondsSinceEpoch(eventData['createdAt']).toIso8601String();
+        }
+        if (eventData['updatedAt'] is int) {
+          eventData['updatedAt'] = DateTime.fromMillisecondsSinceEpoch(eventData['updatedAt']).toIso8601String();
+        }
+        
+        // Ensure required fields have proper types
+        eventData['maxAttendees'] = (eventData['maxAttendees'] ?? 0).toString();
+        eventData['currentAttendees'] = (eventData['currentAttendees'] ?? 0).toString();
+        eventData['registeredCount'] = (eventData['registeredCount'] ?? eventData['currentAttendees'] ?? 0).toString();
+        eventData['isPublished'] = eventData['isPublished'] ?? false;
+        eventData['isOnline'] = eventData['isOnline'] ?? false;
+        eventData['tags'] = eventData['tags'] ?? [];
+        
+        // Convert numeric fields back to int for Event model
+        eventData['maxAttendees'] = int.tryParse(eventData['maxAttendees'].toString()) ?? 0;
+        eventData['currentAttendees'] = int.tryParse(eventData['currentAttendees'].toString()) ?? 0;
+        eventData['registeredCount'] = int.tryParse(eventData['registeredCount'].toString()) ?? 0;
+        
         return Event.fromJson(eventData);
       }).toList()
         ..sort((a, b) => b.date.compareTo(a.date));
@@ -40,17 +62,40 @@ class FirebaseRealtimeService {
     );
   }
 
-  /// Get event by ID
-  Future<Event?> getEventById(String id) async {
+  /// Get a specific event by ID
+  Future<Event?> getEvent(String id) async {
     try {
       final snapshot = await _database.ref('events/$id').get();
       if (!snapshot.exists) return null;
       
-      final data = Map<String, dynamic>.from(snapshot.value as Map);
-      data['id'] = id;
-      return Event.fromJson(data);
+      final eventData = Map<String, dynamic>.from(snapshot.value as Map);
+      eventData['id'] = id;
+      
+      // Convert Firebase timestamps to proper formats
+      if (eventData['createdAt'] is int) {
+        eventData['createdAt'] = DateTime.fromMillisecondsSinceEpoch(eventData['createdAt']).toIso8601String();
+      }
+      if (eventData['updatedAt'] is int) {
+        eventData['updatedAt'] = DateTime.fromMillisecondsSinceEpoch(eventData['updatedAt']).toIso8601String();
+      }
+      
+      // Ensure required fields have proper types
+      eventData['maxAttendees'] = (eventData['maxAttendees'] ?? 0).toString();
+      eventData['currentAttendees'] = (eventData['currentAttendees'] ?? 0).toString();
+      eventData['registeredCount'] = (eventData['registeredCount'] ?? eventData['currentAttendees'] ?? 0).toString();
+      eventData['isPublished'] = eventData['isPublished'] ?? false;
+      eventData['isOnline'] = eventData['isOnline'] ?? false;
+      eventData['tags'] = eventData['tags'] ?? [];
+      
+      // Convert numeric fields back to int for Event model
+      eventData['maxAttendees'] = int.tryParse(eventData['maxAttendees'].toString()) ?? 0;
+      eventData['currentAttendees'] = int.tryParse(eventData['currentAttendees'].toString()) ?? 0;
+      eventData['registeredCount'] = int.tryParse(eventData['registeredCount'].toString()) ?? 0;
+      
+      return Event.fromJson(eventData);
     } catch (e) {
-      throw Exception('Failed to get event: $e');
+      print('Error getting event: $e');
+      return null;
     }
   }
 
@@ -115,16 +160,30 @@ class FirebaseRealtimeService {
       return data.entries.map((entry) {
         final memberData = Map<String, dynamic>.from(entry.value as Map);
         memberData['id'] = entry.key;
-        // Convert timestamp to DateTime
+        
+        // Convert timestamp to DateTime string for JSON parsing
         if (memberData['joinDate'] is int) {
-          memberData['joinDate'] = DateTime.fromMillisecondsSinceEpoch(memberData['joinDate']);
+          memberData['joinDate'] = DateTime.fromMillisecondsSinceEpoch(memberData['joinDate']).toIso8601String();
+        } else if (memberData['joinDate'] is DateTime) {
+          memberData['joinDate'] = (memberData['joinDate'] as DateTime).toIso8601String();
         }
+        
         if (memberData['createdAt'] is int) {
-          memberData['createdAt'] = DateTime.fromMillisecondsSinceEpoch(memberData['createdAt']);
+          memberData['createdAt'] = DateTime.fromMillisecondsSinceEpoch(memberData['createdAt']).toIso8601String();
+        } else if (memberData['createdAt'] is DateTime) {
+          memberData['createdAt'] = (memberData['createdAt'] as DateTime).toIso8601String();
         }
+        
         if (memberData['updatedAt'] is int) {
-          memberData['updatedAt'] = DateTime.fromMillisecondsSinceEpoch(memberData['updatedAt']);
+          memberData['updatedAt'] = DateTime.fromMillisecondsSinceEpoch(memberData['updatedAt']).toIso8601String();
+        } else if (memberData['updatedAt'] is DateTime) {
+          memberData['updatedAt'] = (memberData['updatedAt'] as DateTime).toIso8601String();
         }
+        
+        // Ensure required fields have proper defaults
+        memberData['isActive'] = memberData['isActive'] ?? true;
+        memberData['bio'] = memberData['bio'] ?? '';
+        
         return TeamMember.fromJson(memberData);
       }).toList()
         ..sort((a, b) => a.name.compareTo(b.name));
@@ -138,27 +197,42 @@ class FirebaseRealtimeService {
     );
   }
 
-  /// Get team member by ID
-  Future<TeamMember?> getTeamMemberById(String id) async {
+  /// Get a specific team member by ID
+  Future<TeamMember?> getTeamMember(String id) async {
     try {
       final snapshot = await _database.ref('team_members/$id').get();
       if (!snapshot.exists) return null;
       
-      final data = Map<String, dynamic>.from(snapshot.value as Map);
-      data['id'] = id;
-      // Convert timestamp to DateTime
-      if (data['joinDate'] is int) {
-        data['joinDate'] = DateTime.fromMillisecondsSinceEpoch(data['joinDate']);
+      final memberData = Map<String, dynamic>.from(snapshot.value as Map);
+      memberData['id'] = id;
+      
+      // Convert timestamp to DateTime string for JSON parsing
+      if (memberData['joinDate'] is int) {
+        memberData['joinDate'] = DateTime.fromMillisecondsSinceEpoch(memberData['joinDate']).toIso8601String();
+      } else if (memberData['joinDate'] is DateTime) {
+        memberData['joinDate'] = (memberData['joinDate'] as DateTime).toIso8601String();
       }
-      if (data['createdAt'] is int) {
-        data['createdAt'] = DateTime.fromMillisecondsSinceEpoch(data['createdAt']);
+      
+      if (memberData['createdAt'] is int) {
+        memberData['createdAt'] = DateTime.fromMillisecondsSinceEpoch(memberData['createdAt']).toIso8601String();
+      } else if (memberData['createdAt'] is DateTime) {
+        memberData['createdAt'] = (memberData['createdAt'] as DateTime).toIso8601String();
       }
-      if (data['updatedAt'] is int) {
-        data['updatedAt'] = DateTime.fromMillisecondsSinceEpoch(data['updatedAt']);
+      
+      if (memberData['updatedAt'] is int) {
+        memberData['updatedAt'] = DateTime.fromMillisecondsSinceEpoch(memberData['updatedAt']).toIso8601String();
+      } else if (memberData['updatedAt'] is DateTime) {
+        memberData['updatedAt'] = (memberData['updatedAt'] as DateTime).toIso8601String();
       }
-      return TeamMember.fromJson(data);
+      
+      // Ensure required fields have proper defaults
+      memberData['isActive'] = memberData['isActive'] ?? true;
+      memberData['bio'] = memberData['bio'] ?? '';
+      
+      return TeamMember.fromJson(memberData);
     } catch (e) {
-      throw Exception('Failed to get team member: $e');
+      print('Error getting team member: $e');
+      return null;
     }
   }
 

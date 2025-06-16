@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/widgets/responsive_wrapper.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/models/team_member.dart';
+import '../../admin/providers/admin_provider.dart';
 
-class TeamPage extends StatelessWidget {
+class TeamPage extends ConsumerWidget {
   const TeamPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final teamMembersAsync = ref.watch(activeTeamMembersStreamProvider);
+
     return SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildTeamGrid(context),
-            const SizedBox(height: 48),
-          ],
+      child: Column(
+        children: [
+          _buildHeader(context),
+          teamMembersAsync.when(
+            data: (teamMembers) => _buildTeamGrid(context, teamMembers),
+            loading: () => _buildLoadingState(),
+            error: (error, stack) => _buildErrorState(context, error.toString()),
+          ),
+          const SizedBox(height: 48),
+        ],
       ),
     );
   }
@@ -64,50 +73,109 @@ class TeamPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTeamGrid(BuildContext context) {
-    final teamMembers = [
-      TeamMember(
-        name: 'Subham Singh',
-        role: 'TECH LEAD',
-        bio: 'Tech Lead at GDG GUG, passionate about building amazing developer experiences.',
-        image: 'assets/images/team/subham.png',
-        social: SocialLinks(
-          linkedin: 'https://linkedin.com/in/subham-singh',
-          twitter: 'https://twitter.com/subham_singh',
-          github: 'https://github.com/subham-singh',
-        ),
-      ),
-      TeamMember(
-        name: 'Keshav',
-        role: 'GDG HEAD',
-        bio: 'Leading the Google Developer Group community at Gurugram University.',
-        image: 'assets/images/team/keshav.png',
-        social: SocialLinks(
-          linkedin: 'https://linkedin.com/in/keshav',
-          twitter: 'https://twitter.com/keshav',
-          github: 'https://github.com/keshav',
-        ),
-      ),
-      // Add more team members as needed
-    ];
+  Widget _buildTeamGrid(BuildContext context, List<TeamMember> teamMembers) {
+    if (teamMembers.isEmpty) {
+      return _buildEmptyState(context);
+    }
 
     return Container(
       color: AppConstants.neutral50,
       padding: const EdgeInsets.symmetric(vertical: 80),
       child: ResponsiveWrapper(
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 32,
-            mainAxisSpacing: 32,
-            childAspectRatio: 0.8,
-          ),
-          itemCount: teamMembers.length,
-          itemBuilder: (context, index) {
-            return TeamMemberCard(member: teamMembers[index]);
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            int crossAxisCount = 3;
+            if (constraints.maxWidth < 768) {
+              crossAxisCount = 1;
+            } else if (constraints.maxWidth < 1024) {
+              crossAxisCount = 2;
+            }
+
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 32,
+                mainAxisSpacing: 32,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: teamMembers.length,
+              itemBuilder: (context, index) {
+                return TeamMemberCard(member: teamMembers[index]);
+              },
+            );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Container(
+      color: AppConstants.neutral50,
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      child: const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppConstants.googleBlue),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String error) {
+    return Container(
+      color: AppConstants.neutral50,
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: AppConstants.googleRed,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error loading team members',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: AppConstants.googleRed,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppConstants.neutral600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Container(
+      color: AppConstants.neutral50,
+      padding: const EdgeInsets.symmetric(vertical: 80),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.people_outline,
+              size: 64,
+              color: AppConstants.neutral400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No team members found',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: AppConstants.neutral600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -167,9 +235,11 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                   child: CircleAvatar(
                     radius: 45,
                     backgroundColor: AppConstants.googleBlue,
-                    backgroundImage: AssetImage(widget.member.image),
+                    backgroundImage: widget.member.imageUrl != null 
+                        ? NetworkImage(widget.member.imageUrl!)
+                        : null,
                     onBackgroundImageError: (_, __) {},
-                    child: widget.member.image.isEmpty 
+                    child: widget.member.imageUrl == null || widget.member.imageUrl!.isEmpty
                         ? Text(
                             widget.member.name.substring(0, 1).toUpperCase(),
                             style: const TextStyle(
@@ -201,17 +271,13 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: widget.member.role == 'TECH LEAD' 
-                              ? AppConstants.googleRed.withOpacity(0.1)
-                              : AppConstants.googleBlue.withOpacity(0.1),
+                          color: _getRoleColor(widget.member.role).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          widget.member.role,
+                          widget.member.role.toUpperCase(),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: widget.member.role == 'TECH LEAD'
-                                ? AppConstants.googleRed
-                                : AppConstants.googleBlue,
+                            color: _getRoleColor(widget.member.role),
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),
@@ -227,6 +293,8 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       
@@ -236,23 +304,28 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildSocialButton(
-                            Icons.business,
-                            widget.member.social.linkedin,
-                            AppConstants.googleBlue,
-                          ),
-                          const SizedBox(width: 12),
-                          _buildSocialButton(
-                            Icons.alternate_email,
-                            widget.member.social.twitter,
-                            AppConstants.googleRed,
-                          ),
-                          const SizedBox(width: 12),
-                          _buildSocialButton(
-                            Icons.code,
-                            widget.member.social.github,
-                            AppConstants.neutral900,
-                          ),
+                          if (widget.member.linkedinUrl != null && widget.member.linkedinUrl!.isNotEmpty)
+                            _buildSocialButton(
+                              Icons.business,
+                              widget.member.linkedinUrl!,
+                              AppConstants.googleBlue,
+                            ),
+                          if (widget.member.linkedinUrl != null && widget.member.linkedinUrl!.isNotEmpty)
+                            const SizedBox(width: 12),
+                          if (widget.member.twitterUrl != null && widget.member.twitterUrl!.isNotEmpty)
+                            _buildSocialButton(
+                              Icons.alternate_email,
+                              widget.member.twitterUrl!,
+                              AppConstants.googleRed,
+                            ),
+                          if (widget.member.twitterUrl != null && widget.member.twitterUrl!.isNotEmpty)
+                            const SizedBox(width: 12),
+                          if (widget.member.githubUrl != null && widget.member.githubUrl!.isNotEmpty)
+                            _buildSocialButton(
+                              Icons.code,
+                              widget.member.githubUrl!,
+                              AppConstants.neutral900,
+                            ),
                         ],
                       ),
                     ],
@@ -264,6 +337,24 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
         ),
       ),
     );
+  }
+
+  Color _getRoleColor(String role) {
+    switch (role.toLowerCase()) {
+      case 'tech lead':
+      case 'technical lead':
+        return AppConstants.googleRed;
+      case 'gdg head':
+      case 'lead organizer':
+        return AppConstants.googleBlue;
+      case 'core team':
+        return AppConstants.googleGreen;
+      case 'social media/content team':
+      case 'marketing lead':
+        return AppConstants.googleYellow;
+      default:
+        return AppConstants.googleBlue;
+    }
   }
 
   Widget _buildSocialButton(IconData icon, String url, Color color) {
@@ -290,32 +381,4 @@ class _TeamMemberCardState extends State<TeamMemberCard> {
       await launchUrl(Uri.parse(url));
     }
   }
-}
-
-class TeamMember {
-  final String name;
-  final String role;
-  final String bio;
-  final String image;
-  final SocialLinks social;
-
-  TeamMember({
-    required this.name,
-    required this.role,
-    required this.bio,
-    required this.image,
-    required this.social,
-  });
-}
-
-class SocialLinks {
-  final String linkedin;
-  final String twitter;
-  final String github;
-
-  SocialLinks({
-    required this.linkedin,
-    required this.twitter,
-    required this.github,
-  });
 } 
