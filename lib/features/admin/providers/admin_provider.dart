@@ -1,150 +1,135 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:typed_data';
-import '../../../core/services/firebase_service.dart';
+import '../../../core/services/firebase_realtime_service.dart';
 import '../../../core/models/event.dart';
 import '../../../core/models/team_member.dart';
 
-// Events state management
+// Firebase Realtime Database Service Provider
+final firebaseRealtimeServiceProvider = Provider<FirebaseRealtimeService>((ref) {
+  return FirebaseRealtimeService();
+});
+
+// Events Stream Provider
 final eventsStreamProvider = StreamProvider<List<Event>>((ref) {
-  return FirebaseService.getEventsStream();
+  final service = ref.watch(firebaseRealtimeServiceProvider);
+  return service.getEventsStream();
 });
 
-final eventsByStatusProvider = StreamProvider.family<List<Event>, String>((ref, status) {
-  return FirebaseService.getEventsByStatus(status);
+// Published Events Stream Provider
+final publishedEventsStreamProvider = StreamProvider<List<Event>>((ref) {
+  final service = ref.watch(firebaseRealtimeServiceProvider);
+  return service.getPublishedEventsStream();
 });
 
-// Team members state management  
+// Team Members Stream Provider
 final teamMembersStreamProvider = StreamProvider<List<TeamMember>>((ref) {
-  return FirebaseService.getTeamMembersStream();
+  final service = ref.watch(firebaseRealtimeServiceProvider);
+  return service.getTeamMembersStream();
 });
 
-final teamMembersByRoleProvider = StreamProvider.family<List<TeamMember>, String>((ref, role) {
-  return FirebaseService.getTeamMembersByRole(role);
+// Active Team Members Stream Provider
+final activeTeamMembersStreamProvider = StreamProvider<List<TeamMember>>((ref) {
+  final service = ref.watch(firebaseRealtimeServiceProvider);
+  return service.getActiveTeamMembersStream();
 });
 
-// Dashboard stats
-final dashboardStatsProvider = FutureProvider<Map<String, int>>((ref) {
-  return FirebaseService.getDashboardStats();
+// Dashboard Stats Provider
+final dashboardStatsProvider = FutureProvider<Map<String, dynamic>>((ref) {
+  final service = ref.watch(firebaseRealtimeServiceProvider);
+  return service.getDashboardStats();
 });
 
-// Admin controller
-class AdminController extends StateNotifier<AdminState> {
-  AdminController() : super(AdminState());
+// Admin Controller
+class AdminController extends StateNotifier<AsyncValue<void>> {
+  AdminController(this._service) : super(const AsyncValue.data(null));
 
-  // Event management
+  final FirebaseRealtimeService _service;
+
+  // Event Management
   Future<void> addEvent(Event event) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = const AsyncValue.loading();
     try {
-      await FirebaseService.addEvent(event);
-      state = state.copyWith(isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      await _service.createEvent(event);
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
     }
   }
 
-  Future<void> updateEvent(String eventId, Event event) async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> updateEvent(String id, Event event) async {
+    state = const AsyncValue.loading();
     try {
-      await FirebaseService.updateEvent(eventId, event);
-      state = state.copyWith(isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      await _service.updateEvent(id, event);
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
     }
   }
 
-  Future<void> deleteEvent(String eventId) async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> deleteEvent(String id) async {
+    state = const AsyncValue.loading();
     try {
-      await FirebaseService.deleteEvent(eventId);
-      state = state.copyWith(isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      await _service.deleteEvent(id);
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
     }
   }
 
-  // Team member management
+  // Team Management
   Future<void> addTeamMember(TeamMember member) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = const AsyncValue.loading();
     try {
-      await FirebaseService.addTeamMember(member);
-      state = state.copyWith(isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      await _service.createTeamMember(member);
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
     }
   }
 
-  Future<void> updateTeamMember(String memberId, TeamMember member) async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> updateTeamMember(String id, TeamMember member) async {
+    state = const AsyncValue.loading();
     try {
-      await FirebaseService.updateTeamMember(memberId, member);
-      state = state.copyWith(isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      await _service.updateTeamMember(id, member);
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
     }
   }
 
-  Future<void> deleteTeamMember(String memberId) async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> deleteTeamMember(String id) async {
+    state = const AsyncValue.loading();
     try {
-      await FirebaseService.deleteTeamMember(memberId);
-      state = state.copyWith(isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      await _service.deleteTeamMember(id);
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
     }
   }
 
-  // Image upload
-  Future<String?> uploadImage({
-    required List<int> imageData,
-    required String fileName,
-    required String folder,
-  }) async {
-    state = state.copyWith(isLoading: true, error: null);
+  // Image Upload
+  Future<String> uploadEventImage(String eventId, List<int> imageBytes, String fileName) async {
     try {
-      final imageBytes = Uint8List.fromList(imageData);
-      final url = await FirebaseService.uploadImage(
-        imageData: imageBytes,
-        fileName: fileName,
-        folder: folder,
-      );
-      state = state.copyWith(isLoading: false);
-      return url;
+      return await _service.uploadEventImage(eventId, Uint8List.fromList(imageBytes), fileName);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-      return null;
+      throw Exception('Failed to upload event image: $e');
     }
   }
 
-  void clearError() {
-    state = state.copyWith(error: null);
+  Future<String> uploadTeamMemberImage(String memberId, List<int> imageBytes, String fileName) async {
+    try {
+      return await _service.uploadTeamMemberImage(memberId, Uint8List.fromList(imageBytes), fileName);
+    } catch (e) {
+      throw Exception('Failed to upload team member image: $e');
+    }
   }
 }
 
-// State class
-class AdminState {
-  final bool isLoading;
-  final String? error;
-
-  AdminState({
-    this.isLoading = false,
-    this.error,
-  });
-
-  AdminState copyWith({
-    bool? isLoading,
-    String? error,
-  }) {
-    return AdminState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
-  }
-}
-
-// Provider instance
-final adminControllerProvider = StateNotifierProvider<AdminController, AdminState>((ref) {
-  return AdminController();
+// Admin Controller Provider
+final adminControllerProvider = StateNotifierProvider<AdminController, AsyncValue<void>>((ref) {
+  final service = ref.watch(firebaseRealtimeServiceProvider);
+  return AdminController(service);
 });
 
 // Utility providers for UI state
